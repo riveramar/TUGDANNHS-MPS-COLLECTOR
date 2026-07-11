@@ -1523,7 +1523,7 @@ function renderEncode(){
     return `<tr><td><div class="subj-cell"><div class="name">${subj.name}</div><div class="type">${subj.type||'—'}</div></div></td>${qCells}<td class="c"><span class="avg-chip ${cc(ra)}">${ra!=null?ra+'%':'—'}</span></td></tr>`;
   }).join('');
 
-  const editBtn=isAdmin?`<button class="btn btn-outline btn-sm" onclick="requireAdmin(()=>openEditSubjects('${sec.id}'))">✏️ Edit Subjects</button>`:`<span style="font-size:11px;color:var(--ink3)">🔒 Admin edits subjects</span>`;
+  const editBtn=isAdmin?`<button class="btn btn-outline btn-sm" onclick="requireAdmin(()=>openEditSectionName('${sec.id}'))" title="Rename section name">📝 Rename</button><button class="btn btn-outline btn-sm" onclick="requireAdmin(()=>openEditSubjects('${sec.id}'))">✏️ Edit Subjects</button>`:`<span style="font-size:11px;color:var(--ink3)">🔒 Admin edits subjects</span>`;
 
   panel.innerHTML=`<div class="entry-wrap">
     <div class="entry-header">
