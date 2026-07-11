@@ -862,10 +862,17 @@ function loadState(){
   }catch(e){ console.warn('Load failed:',e); }
 }
 
-// ─ Google Drive Sync (every teacher saves into ONE shared school folder) ─
+// ─ Google Drive Sync (ONE shared file in the school's Drive folder — admin
+//   and every teacher read/write the same file, so sections/data made by
+//   one person are visible to everyone else after they connect/refresh) ─
 const GOOGLE_CLIENT_ID = '391193475360-tfb867viprit9at8kfv97o4oh357n99n.apps.googleusercontent.com';
 const DRIVE_FOLDER_ID  = '1nc-rK6xAVEoX8SiQfWyC1t4F0XuI1aKB'; // shared "MPS Submissions" folder
-const DRIVE_SCOPE      = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
+// Full Drive scope (not drive.file) is required here: drive.file would only let
+// each signer see files *they personally* created through this app, which is
+// exactly the per-teacher-silo bug we're fixing. With the folder shared to
+// teachers as Editors, this scope lets everyone read/write the one shared file.
+const DRIVE_SCOPE      = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email';
+const DRIVE_FILENAME   = 'mps-encoder-2627-shared-data.json';
 
 let gTokenClient    = null;
 let gDriveToken     = null;
@@ -874,7 +881,6 @@ let gDriveConnected = false;
 let gDriveSyncTimer = null;
 let gDriveBusy      = false;
 let gTeacherEmail   = null;
-let gDriveFilename  = null;
 
 function initGoogleDrive(){
   if(!window.google || !google.accounts || !google.accounts.oauth2){ setTimeout(initGoogleDrive, 300); return; }
@@ -888,12 +894,11 @@ function initGoogleDrive(){
         const who = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{
           headers:{ Authorization:'Bearer '+gDriveToken }
         }).then(r=>r.json());
-        gTeacherEmail  = who.email || 'unknown-teacher';
+        gTeacherEmail = who.email || 'Connected';
       }catch(e){
         console.warn('Userinfo fetch failed:', e);
-        gTeacherEmail = 'unknown-teacher';
+        gTeacherEmail = 'Connected';
       }
-      gDriveFilename  = `mps-data-${gTeacherEmail}.json`;
       gDriveFileId    = null;
       gDriveConnected = true;
       sessionStorage.setItem('gDriveWasConnected','1');
@@ -921,7 +926,6 @@ function disconnectDrive(){
   gDriveToken     = null;
   gDriveFileId    = null;
   gTeacherEmail   = null;
-  gDriveFilename  = null;
   sessionStorage.removeItem('gDriveWasConnected');
   updateDriveUI();
   toast('🔌 Na-disconnect sa Google Drive. Naka-save pa rin lokal sa browser na ito.');
@@ -932,7 +936,7 @@ function updateDriveUI(){
   if(!btn) return;
   btn.classList.toggle('unlocked', gDriveConnected);
   btn.title = gDriveConnected
-    ? `Naka-connect bilang ${gTeacherEmail} — na-sasave sa shared na "MPS Submissions" folder`
+    ? `Naka-connect bilang ${gTeacherEmail} — shared na file, kasama ang lahat ng teachers`
     : 'I-sync ang data sa shared na Google Drive folder ng school';
   btn.innerHTML = gDriveConnected
     ? `<span>☁️</span><span>${gTeacherEmail||'Connected'}</span>`
@@ -940,7 +944,7 @@ function updateDriveUI(){
 }
 
 async function driveFindFile(){
-  const q = encodeURIComponent(`name='${gDriveFilename}' and '${DRIVE_FOLDER_ID}' in parents and trashed=false`);
+  const q = encodeURIComponent(`name='${DRIVE_FILENAME}' and '${DRIVE_FOLDER_ID}' in parents and trashed=false`);
   const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name,modifiedTime)`,{
     headers:{ Authorization:'Bearer '+gDriveToken }
   });
@@ -949,13 +953,13 @@ async function driveFindFile(){
   return (data.files && data.files[0]) || null;
 }
 
-async function driveLoad(){
+async function driveLoad(silent){
   if(!gDriveToken) return;
   gDriveBusy = true;
   try{
     const f = await driveFindFile();
     if(!f){
-      toast(`☁️ Naka-connect bilang ${gTeacherEmail}! Wala ka pang file sa shared folder — i-click ang Save para gumawa ng bago.`);
+      if(!silent) toast(`☁️ Naka-connect bilang ${gTeacherEmail}! Wala pang shared file — i-click ang Save para gumawa ng bago.`);
       gDriveBusy = false;
       return;
     }
@@ -968,10 +972,10 @@ async function driveLoad(){
     mergeSavedState(saved);
     persistLocalOnly();
     refreshUI();
-    toast('☁️ Na-load ang pinakabagong data mo mula sa shared na Drive folder!');
+    if(!silent) toast('☁️ Na-load ang pinakabagong shared data mula sa Google Drive!');
   }catch(e){
     console.warn('Drive load error:', e);
-    toast('⚠️ Hindi na-load ang data sa Drive. Gagamitin muna ang naka-save sa browser na ito.');
+    if(!silent) toast('⚠️ Hindi na-load ang data sa Drive. Gagamitin muna ang naka-save sa browser na ito.');
   }
   gDriveBusy = false;
 }
@@ -986,7 +990,7 @@ async function driveSave(){
     const content  = JSON.stringify(state);
     const metadata = gDriveFileId
       ? {}
-      : { name: gDriveFilename, mimeType:'application/json', parents:[DRIVE_FOLDER_ID] };
+      : { name: DRIVE_FILENAME, mimeType:'application/json', parents:[DRIVE_FOLDER_ID] };
     const boundary = '-------mpsencoder' + Date.now();
     const body =
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`+
@@ -1012,8 +1016,15 @@ async function driveSave(){
 function driveSyncDebounced(){
   if(!gDriveConnected) return;
   clearTimeout(gDriveSyncTimer);
-  gDriveSyncTimer = setTimeout(driveSave, 1200);
+  gDriveSyncTimer = setTimeout(()=>{ gDriveSyncTimer=null; driveSave(); }, 1200);
 }
+
+// Since everyone shares ONE file, silently pull the latest version whenever
+// the tab regains focus — but only if there's no pending unsaved edit, so we
+// don't clobber something the teacher just typed.
+window.addEventListener('focus', ()=>{
+  if(gDriveConnected && !gDriveBusy && !gDriveSyncTimer){ driveLoad(true); }
+});
 
 // ─ Current SY helpers ─
 const isHistSY = (sy) => SY_CONFIG[sy]?.type === 'historical';
