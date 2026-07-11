@@ -1605,7 +1605,7 @@ function renderSettings(){
       if(s.isMapeh){ const pairs=(s.mapehPairs||[]).map(p=>`<span style="font-size:10px;background:var(--accentbg);color:var(--accent);padding:1px 6px;border-radius:8px;font-weight:700">${p.label}</span>`).join(' '); return `<div class="subj-item-sm"><span class="sn">🎵 MAPEH</span><span class="st" style="display:flex;gap:3px;flex-wrap:wrap">${pairs}</span></div>`; }
       return `<div class="subj-item-sm"><span class="sn">${s.name}</span><span class="st">${s.type||'—'}</span></div>`;
     }).join('');
-    return `<div class="config-card"><div class="config-card-head"><div><div class="config-card-title">${sec.name}</div><div style="font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace;margin-top:1px">${sec.subjects.length} subjects · ${sy}</div></div><div style="display:flex;gap:5px"><button class="btn btn-outline btn-xs" onclick="openEditSubjects('${sec.id}')">✏️</button><button class="btn btn-red btn-xs" onclick="deleteSection('${sec.id}')">🗑</button></div></div><div class="config-card-body">${subjItems||'<div style="color:var(--ink3);font-size:11px;text-align:center;padding:8px">No subjects.</div>'}</div></div>`;
+    return `<div class="config-card"><div class="config-card-head"><div><div class="config-card-title">${sec.name}</div><div style="font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace;margin-top:1px">${sec.subjects.length} subjects · ${sy}</div></div><div style="display:flex;gap:5px"><button class="btn btn-outline btn-xs" onclick="openEditSectionName('${sec.id}')" title="Rename section name">📝</button><button class="btn btn-outline btn-xs" onclick="openEditSubjects('${sec.id}')" title="Add/remove/rename subjects">✏️</button><button class="btn btn-red btn-xs" onclick="deleteSection('${sec.id}')">🗑</button></div></div><div class="config-card-body">${subjItems||'<div style="color:var(--ink3);font-size:11px;text-align:center;padding:8px">No subjects.</div>'}</div></div>`;
   }).join('');
 
   panel.innerHTML=`<div class="config-wrap">
@@ -1634,23 +1634,52 @@ function toggleLock(term,q){
 // ════════════════════════════════════════════
 //  MODALS — Section & Subjects
 // ════════════════════════════════════════════
-function openAddSection(){ editingSectionId=null; modalTempSubjects=deepCopySubs(DEFAULT_SUBJECTS); document.getElementById('mSecTitle').textContent='Add New Section'; document.getElementById('mSecName').value=''; document.getElementById('mSecSubjName').value=''; document.getElementById('mSecSubjType').value=''; renderModalSubjList(); openModal('modalSection'); }
+function openAddSection(){ editingSectionId=null; modalTempSubjects=deepCopySubs(DEFAULT_SUBJECTS); modalEditingSubjIdx=-1; document.getElementById('mSecTitle').textContent='Add New Section'; document.getElementById('mSecName').value=''; document.getElementById('mSecSubjName').value=''; document.getElementById('mSecSubjType').value=''; renderModalSubjList(); openModal('modalSection'); }
+function openEditSectionName(secId){ const sec=getSecs().find(s=>s.id===secId); if(!sec) return; editingSectionId=secId; modalTempSubjects=deepCopySubs(sec.subjects); modalEditingSubjIdx=-1; document.getElementById('mSecTitle').textContent='Edit Section'; document.getElementById('mSecName').value=sec.name; document.getElementById('mSecSubjName').value=''; document.getElementById('mSecSubjType').value=''; renderModalSubjList(); openModal('modalSection'); }
 function renderModalSubjList(){ const cnt=document.getElementById('mSecSubjCount'); if(cnt) cnt.textContent=modalTempSubjects.length+' subjects'; document.getElementById('mSecSubjList').innerHTML=modalTempSubjects.map((s,i)=>subjRowHTML(s,i,'modal')).join(''); }
+let modalEditingSubjIdx = -1;
+let editEditingSubjIdx  = -1;
+
 function subjRowHTML(s,i,ctx){
   const badge=s.isDefault?`<span style="font-size:9px;background:var(--accentbg);color:var(--accent);border:1px solid rgba(212,80,10,.2);padding:1px 5px;border-radius:8px;font-weight:700;font-family:'JetBrains Mono',monospace">DEF</span>`:`<span style="font-size:9px;background:var(--bluebg);color:var(--blue);border:1px solid rgba(29,95,168,.2);padding:1px 5px;border-radius:8px;font-weight:700;font-family:'JetBrains Mono',monospace">EXTRA</span>`;
-  const del=`<button class="ai-del" onclick="removeSubj(${i},'${ctx}')">✕</button>`;
+  const editingIdx = ctx==='modal' ? modalEditingSubjIdx : editEditingSubjIdx;
+  if(!s.isMapeh && editingIdx===i){
+    // Inline rename mode: swap the row for editable inputs
+    return `<div class="subj-added-item" style="gap:5px">
+      <input type="text" class="text-input" id="subjEditName_${ctx}_${i}" value="${(s.name||'').replace(/"/g,'&quot;')}" style="flex:2;padding:4px 8px;font-size:12px" placeholder="Subject name">
+      <input type="text" class="text-input" id="subjEditType_${ctx}_${i}" value="${(s.type||'').replace(/"/g,'&quot;')}" style="flex:1.2;padding:4px 8px;font-size:12px" placeholder="Type">
+      <button class="ai-del" style="color:var(--green,#1a7f37)" onclick="confirmEditSubj(${i},'${ctx}')" title="Save">✓</button>
+      <button class="ai-del" onclick="cancelEditSubj('${ctx}')" title="Cancel">✕</button>
+    </div>`;
+  }
+  const editBtn = s.isMapeh ? '' : `<button class="ai-del" onclick="startEditSubj(${i},'${ctx}')" title="Rename">✏️</button>`;
+  const del=`<button class="ai-del" onclick="removeSubj(${i},'${ctx}')" title="Remove">✕</button>`;
   if(s.isMapeh){
     const pairs=(s.mapehPairs||[]).map(p=>`<span style="display:inline-flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;font-weight:600">🎵 ${p.label}</span>`).join('');
     return `<div class="subj-added-item" style="flex-wrap:wrap;gap:5px;padding:8px"><div style="display:flex;align-items:center;gap:6px;width:100%"><span class="ai-n">🎵 MAPEH</span>${badge}<span class="ai-t">Core · auto-avg</span>${del}</div><div style="display:flex;gap:4px;flex-wrap:wrap">${pairs}</div></div>`;
   }
-  return `<div class="subj-added-item"><span class="ai-n">${s.name}</span>${badge}<span class="ai-t">${s.type||''}</span>${del}</div>`;
+  return `<div class="subj-added-item"><span class="ai-n">${s.name}</span>${badge}<span class="ai-t">${s.type||''}</span>${editBtn}${del}</div>`;
+}
+function startEditSubj(i,ctx){
+  if(ctx==='modal'){ modalEditingSubjIdx=i; renderModalSubjList(); }
+  else{ editEditingSubjIdx=i; renderEditSubjList(); }
+}
+function cancelEditSubj(ctx){
+  if(ctx==='modal'){ modalEditingSubjIdx=-1; renderModalSubjList(); }
+  else{ editEditingSubjIdx=-1; renderEditSubjList(); }
+}
+function confirmEditSubj(i,ctx){
+  const nameEl=document.getElementById(`subjEditName_${ctx}_${i}`), typeEl=document.getElementById(`subjEditType_${ctx}_${i}`);
+  const name=nameEl.value.trim(), type=typeEl.value.trim();
+  if(!name){ toast('Enter a subject name.'); return; }
+  if(ctx==='modal'){ modalTempSubjects[i].name=name; modalTempSubjects[i].type=type; modalEditingSubjIdx=-1; renderModalSubjList(); }
+  else{ editTempSubjects[i].name=name; editTempSubjects[i].type=type; editEditingSubjIdx=-1; renderEditSubjList(); }
 }
 function removeSubj(i,ctx){ if(ctx==='modal'){modalTempSubjects.splice(i,1);renderModalSubjList();}else{editTempSubjects.splice(i,1);renderEditSubjList();} }
 function addSubjToModal(){ const name=document.getElementById('mSecSubjName').value.trim(); const type=document.getElementById('mSecSubjType').value.trim(); if(!name){toast('Enter a subject name.');return;} modalTempSubjects.push({name,type,isDefault:false}); document.getElementById('mSecSubjName').value=''; document.getElementById('mSecSubjType').value=''; document.getElementById('mSecSubjName').focus(); renderModalSubjList(); }
 document.getElementById('mSecSubjName').addEventListener('keydown',e=>{if(e.key==='Enter')addSubjToModal();});
-document.getElementById('mSubjName').addEventListener('keydown',e=>{if(e.key==='Enter')addSubjToEdit();});
 function commitSection(){ const name=document.getElementById('mSecName').value.trim(); if(!name){toast('Enter a section name.');return;} if(editingSectionId){const sec=getSecs().find(s=>s.id===editingSectionId);sec.name=name;sec.subjects=modalTempSubjects;}else{curSY().sections.push({id:uid(),name,subjects:modalTempSubjects});} persist();closeModal('modalSection');updateSidebar();if(state.currentPage==='settings')renderSettings();if(state.currentPage==='dashboard')renderDashboard();toast(editingSectionId?'Section updated!':'Section added! ✓'); }
-function openEditSubjects(secId){ editingSubjectsSectionId=secId; const sec=getSecs().find(s=>s.id===secId); editTempSubjects=deepCopySubs(sec.subjects); document.getElementById('mSubjSub').textContent=sec.name+' — remove or add subjects'; document.getElementById('mSubjName').value=''; document.getElementById('mSubjType').value=''; renderEditSubjList(); openModal('modalSubjects'); }
+function openEditSubjects(secId){ editingSubjectsSectionId=secId; const sec=getSecs().find(s=>s.id===secId); editTempSubjects=deepCopySubs(sec.subjects); editEditingSubjIdx=-1; document.getElementById('mSubjSub').textContent=sec.name+' — remove or add subjects'; document.getElementById('mSubjName').value=''; document.getElementById('mSubjType').value=''; renderEditSubjList(); openModal('modalSubjects'); }
 function renderEditSubjList(){ document.getElementById('mSubjList').innerHTML=editTempSubjects.map((s,i)=>subjRowHTML(s,i,'edit')).join(''); }
 function addSubjToEdit(){ const name=document.getElementById('mSubjName').value.trim(); const type=document.getElementById('mSubjType').value.trim(); if(!name){toast('Enter a subject name.');return;} editTempSubjects.push({name,type,isDefault:false}); document.getElementById('mSubjName').value=''; document.getElementById('mSubjType').value=''; document.getElementById('mSubjName').focus(); renderEditSubjList(); }
 document.getElementById('mSubjName').addEventListener('keydown',e=>{if(e.key==='Enter')addSubjToEdit();});
