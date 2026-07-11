@@ -340,6 +340,9 @@ tr:hover td{background:rgba(0,0,0,.015)}
   .topbar-right .btn:not(:last-child){display:none}
   .topbar-right{padding-right:8px;gap:5px}
   .topbar-right .btn{font-size:11px;padding:6px 10px}
+  /* Drive sync status must stay visible on mobile too */
+  .topbar-right #driveBtn{display:flex!important;max-width:34px;padding:6px 8px;overflow:hidden}
+  .topbar-right #driveBtn span:last-child{display:none}
 
   /* SY BAR — single row compact */
   .sybar{height:auto;padding:6px 12px;flex-wrap:wrap;gap:6px}
