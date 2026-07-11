@@ -877,10 +877,14 @@ const DRIVE_FOLDER_ID  = '1nc-rK6xAVEoX8SiQfWyC1t4F0XuI1aKB'; // shared "MPS Sub
 // teachers as Editors, this scope lets everyone read/write the one shared file.
 const DRIVE_SCOPE      = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email';
 const DRIVE_FILENAME   = 'mps-encoder-2627-shared-data.json';
+// Pinned to ONE specific file — everyone reads/writes this exact ID, so we
+// never search-then-maybe-create (which was creating duplicate files whenever
+// a search missed, causing each account to see a different "latest" copy).
+const DRIVE_FILE_ID    = '1v8lWcZpHdMhS1f_xfRjOnk0j2zytE_u-';
 
 let gTokenClient    = null;
 let gDriveToken     = null;
-let gDriveFileId    = null;
+let gDriveFileId    = DRIVE_FILE_ID;
 let gDriveConnected = false;
 let gDriveSyncTimer = null;
 let gDriveBusy      = false;
@@ -903,7 +907,7 @@ function initGoogleDrive(){
         console.warn('Userinfo fetch failed:', e);
         gTeacherEmail = 'Connected';
       }
-      gDriveFileId    = null;
+      gDriveFileId    = DRIVE_FILE_ID;
       gDriveConnected = true;
       localStorage.setItem('gDriveWasConnected','1');
       updateDriveUI();
@@ -928,7 +932,7 @@ function connectDrive(){
 function disconnectDrive(){
   gDriveConnected = false;
   gDriveToken     = null;
-  gDriveFileId    = null;
+  gDriveFileId    = DRIVE_FILE_ID;
   gTeacherEmail   = null;
   localStorage.removeItem('gDriveWasConnected');
   updateDriveUI();
@@ -955,30 +959,18 @@ async function manualDriveRefresh(){
   await driveLoad();
 }
 
-async function driveFindFile(){
-  const q = encodeURIComponent(`name='${DRIVE_FILENAME}' and '${DRIVE_FOLDER_ID}' in parents and trashed=false`);
-  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name,modifiedTime)`,{
-    headers:{ Authorization:'Bearer '+gDriveToken }
-  });
-  if(!res.ok) throw new Error('Drive search failed: '+res.status);
-  const data = await res.json();
-  return (data.files && data.files[0]) || null;
-}
-
 async function driveLoad(silent){
   if(!gDriveToken) return;
   gDriveBusy = true;
   try{
-    const f = await driveFindFile();
-    if(!f){
-      if(!silent) toast(`☁️ Naka-connect bilang ${gTeacherEmail}! Wala pang shared file — i-click ang Save para gumawa ng bago.`);
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${DRIVE_FILE_ID}?alt=media`,{
+      headers:{ Authorization:'Bearer '+gDriveToken }
+    });
+    if(res.status===404){
+      if(!silent) toast('⚠️ Hindi mahanap ang shared file sa Drive. Kontakin ang admin.');
       gDriveBusy = false;
       return;
     }
-    gDriveFileId = f.id;
-    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,{
-      headers:{ Authorization:'Bearer '+gDriveToken }
-    });
     if(!res.ok) throw new Error('Drive load failed: '+res.status);
     const saved = await res.json();
     mergeSavedState(saved);
@@ -995,30 +987,18 @@ async function driveLoad(silent){
 async function driveSave(){
   if(!gDriveConnected || !gDriveToken) return;
   try{
-    if(!gDriveFileId){
-      const existing = await driveFindFile();
-      if(existing) gDriveFileId = existing.id;
-    }
     const content  = JSON.stringify(state);
-    const metadata = gDriveFileId
-      ? {}
-      : { name: DRIVE_FILENAME, mimeType:'application/json', parents:[DRIVE_FOLDER_ID] };
     const boundary = '-------mpsencoder' + Date.now();
     const body =
-      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`+
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{}\r\n`+
       `--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n`+
       `--${boundary}--`;
-    const url = gDriveFileId
-      ? `https://www.googleapis.com/upload/drive/v3/files/${gDriveFileId}?uploadType=multipart`
-      : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
-    const res = await fetch(url,{
-      method: gDriveFileId ? 'PATCH' : 'POST',
+    const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${DRIVE_FILE_ID}?uploadType=multipart`,{
+      method: 'PATCH',
       headers:{ Authorization:'Bearer '+gDriveToken, 'Content-Type':`multipart/related; boundary=${boundary}` },
       body
     });
     if(!res.ok) throw new Error('Drive save failed: '+res.status);
-    const data = await res.json();
-    gDriveFileId = data.id;
   }catch(e){
     console.warn('Drive save error:', e);
     toast('⚠️ Hindi na-sync sa Google Drive (naka-save pa rin ito sa browser na ito).');
