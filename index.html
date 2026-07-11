@@ -342,6 +342,7 @@ tr:hover td{background:rgba(0,0,0,.015)}
   .topbar-right .btn{font-size:11px;padding:6px 10px}
   /* Drive sync status must stay visible on mobile too */
   .topbar-right #driveBtn{display:flex!important;max-width:34px;padding:6px 8px;overflow:hidden}
+  .topbar-right #driveRefreshBtn{display:inline-flex!important;padding:6px 8px}
   .topbar-right #driveBtn span:last-child{display:none}
 
   /* SY BAR — single row compact */
@@ -517,6 +518,9 @@ tr:hover td{background:rgba(0,0,0,.015)}
       <button class="btn btn-sm" onclick="restoreData()" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.15)" title="Restore from JSON backup">🔁 Restore</button>
       <button class="btn btn-sm admin-btn" id="driveBtn" onclick="connectDrive()" style="border-radius:20px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="I-sync ang data sa shared na Google Drive folder ng school">
         <span>☁️</span><span>Connect Drive</span>
+      </button>
+      <button class="btn btn-sm" id="driveRefreshBtn" onclick="manualDriveRefresh()" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.15);display:none" title="Kunin ang pinakabagong data mula sa shared Drive folder">
+        🔄
       </button>
       <button class="btn btn-primary btn-sm" onclick="saveData()">💾 Save</button>
     </div>
@@ -933,6 +937,7 @@ function disconnectDrive(){
 
 function updateDriveUI(){
   const btn = document.getElementById('driveBtn');
+  const refreshBtn = document.getElementById('driveRefreshBtn');
   if(!btn) return;
   btn.classList.toggle('unlocked', gDriveConnected);
   btn.title = gDriveConnected
@@ -941,6 +946,13 @@ function updateDriveUI(){
   btn.innerHTML = gDriveConnected
     ? `<span>☁️</span><span>${gTeacherEmail||'Connected'}</span>`
     : '<span>☁️</span><span>Connect Drive</span>';
+  if(refreshBtn) refreshBtn.style.display = gDriveConnected ? 'inline-flex' : 'none';
+}
+
+async function manualDriveRefresh(){
+  if(!gDriveConnected){ toast('☁️ I-connect muna ang Google Drive.'); return; }
+  toast('🔄 Kinukuha ang pinakabagong data mula sa Drive...');
+  await driveLoad();
 }
 
 async function driveFindFile(){
@@ -1025,6 +1037,14 @@ function driveSyncDebounced(){
 window.addEventListener('focus', ()=>{
   if(gDriveConnected && !gDriveBusy && !gDriveSyncTimer){ driveLoad(true); }
 });
+
+// Also poll every 20s while connected & idle, so changes from other teachers
+// show up without needing to switch tabs or click Refresh manually.
+setInterval(()=>{
+  if(gDriveConnected && !gDriveBusy && !gDriveSyncTimer && document.visibilityState==='visible'){
+    driveLoad(true);
+  }
+}, 20000);
 
 // ─ Current SY helpers ─
 const isHistSY = (sy) => SY_CONFIG[sy]?.type === 'historical';
