@@ -1051,14 +1051,14 @@ function setLock(term,q,val){
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const normVal = v => { const n=parseFloat(v); return (isNaN(n)||n<0)?null:(n>1?n:n*100); };
 const cc = v => (v===null||v===''||v===undefined)?'n':v>=75?'g':v>=60?'y':'r';
-const deepCopySubs = arr => arr.map(s=>({...s,mapehPairs:s.mapehPairs?s.mapehPairs.map(p=>({...p,subs:[...p.subs]})):undefined}));
+const deepCopySubs = arr => arr.map(s=>({...s,mapehPairs:s.mapehPairs?s.mapehPairs.map(p=>({...p,subs:p.subs?[...p.subs]:[]})):undefined}));
 const fmt = v => v!==null&&v!==undefined&&v!==''?parseFloat(v).toFixed(2):'—';
 
 // ─ Averages (live SY) ─
 function subjAvgInSec(sec,i,term){
   const subj=sec.subjects[i]; if(!subj) return null;
-  if(subj.isMapeh){
-    const pairs=subj.mapehPairs||[];
+  if(subj.mapehPairs && subj.mapehPairs.length){
+    const pairs=subj.mapehPairs;
     const allV=pairs.flatMap((_,pi)=>QS.map(q=>normVal(getMPS(sec.id,term,`m${i}_${pi}`,q.key))).filter(v=>v!==null));
     return allV.length?allV.reduce((a,b)=>a+b)/allV.length:null;
   }
@@ -1079,8 +1079,8 @@ function filledCount(sid,term){
   const sec=getSecs().find(s=>s.id===sid); if(!sec) return {filled:0,total:0};
   let f=0,t=0;
   sec.subjects.forEach((subj,i)=>{
-    if(subj.isMapeh){
-      const pairs=subj.mapehPairs||[];
+    if(subj.mapehPairs && subj.mapehPairs.length){
+      const pairs=subj.mapehPairs;
       pairs.forEach((_,pi)=>QS.forEach(q=>{ t++; const v=getMPS(sid,term,`m${i}_${pi}`,q.key); if(v!==''&&v!==null&&v!==undefined) f++; }));
     } else {
       QS.forEach(q=>{ t++; const v=getMPS(sid,term,i,q.key); if(v!==''&&v!==null&&v!==undefined) f++; });
@@ -1097,8 +1097,8 @@ function liveYearlyMPS(sy){
   secs.forEach(sec=>{
     sec.subjects.forEach((subj,i)=>{
       [1,2,3].forEach(term=>{
-        if(subj.isMapeh){
-          const pairs=subj.mapehPairs||[];
+        if(subj.mapehPairs && subj.mapehPairs.length){
+          const pairs=subj.mapehPairs;
           QS.forEach(q=>{
             const pv=pairs.map((_,pi)=>{ const raw=d.mps?.[sec.id]?.[term]?.[`m${i}_${pi}`]?.[q.key]; return normVal(raw); }).filter(v=>v!==null);
             if(pv.length) allVals.push(pv.reduce((a,b)=>a+b)/pv.length);
@@ -1469,8 +1469,8 @@ function renderEncode(){
 
   const vals=[];
   sec.subjects.forEach((subj,i)=>{
-    if(subj.isMapeh){
-      const pairs=subj.mapehPairs||[];
+    if(subj.mapehPairs && subj.mapehPairs.length){
+      const pairs=subj.mapehPairs;
       QS.forEach(q=>{ const pv=pairs.map((_,pi)=>normVal(getMPS(sec.id,t,`m${i}_${pi}`,q.key))).filter(v=>v!==null); if(pv.length) vals.push(pv.reduce((a,b)=>a+b)/pv.length); });
     } else {
       QS.forEach(q=>{ const v=normVal(getMPS(sec.id,t,i,q.key)); if(v!==null) vals.push(v); });
@@ -1488,8 +1488,10 @@ function renderEncode(){
   }).join('');
 
   const rows=sec.subjects.map((subj,i)=>{
-    if(subj.isMapeh){
-      const pairs=subj.mapehPairs||[];
+    if(subj.mapehPairs && subj.mapehPairs.length){
+      const pairs=subj.mapehPairs;
+      const label = subj.isMapeh ? '🎵 MAPEH' : subj.name;
+      const typeText = subj.isMapeh ? 'Core · auto-avg' : (subj.type||'Core')+' · auto-avg';
       const pairRows=pairs.map((pair,pi)=>{
         const qCells=QS.map(q=>{
           const locked=isLocked(t,q.key);
@@ -1502,13 +1504,16 @@ function renderEncode(){
         }).join('');
         const rv=QS.map(q=>normVal(getMPS(sec.id,t,`m${i}_${pi}`,q.key))).filter(v=>v!==null);
         const ra=rv.length?(rv.reduce((a,b)=>a+b)/rv.length).toFixed(1):null;
-        return `<tr style="background:rgba(212,80,10,.025)"><td style="padding-left:26px"><div class="subj-cell"><div class="name" style="font-size:12px">↳ ${pair.label}</div><div class="type">MAPEH · shared</div></div></td>${qCells}<td class="c"><span class="avg-chip ${cc(ra)}" style="font-size:10px">${ra!=null?ra+'%':'—'}</span></td></tr>`;
+        const rmBtn = (isAdmin && !subj.isMapeh) ? `<button class="ai-del" style="margin-left:4px" onclick="requireAdmin(()=>removeMultiRow('${sec.id}',${i},${pi}))" title="Remove this row">✕</button>` : '';
+        return `<tr style="background:rgba(212,80,10,.025)"><td style="padding-left:26px"><div class="subj-cell"><div class="name" style="font-size:12px">↳ ${pair.label}${rmBtn}</div><div class="type">${label.replace('🎵 ','')} · shared</div></div></td>${qCells}<td class="c"><span class="avg-chip ${cc(ra)}" style="font-size:10px">${ra!=null?ra+'%':'—'}</span></td></tr>`;
       }).join('');
       const mAvgCells=QS.map(q=>{ const pv=pairs.map((_,pi)=>normVal(getMPS(sec.id,t,`m${i}_${pi}`,q.key))).filter(v=>v!==null); const a=pv.length?pv.reduce((a,b)=>a+b)/pv.length:null; return `<td class="c"><span class="avg-chip ${cc(a)}" style="font-weight:800">${a!=null?a.toFixed(1)+'%':'—'}</span></td>`; }).join('');
       const allMV=pairs.flatMap((_,pi)=>QS.map(q=>normVal(getMPS(sec.id,t,`m${i}_${pi}`,q.key))).filter(v=>v!==null));
       const mOv=allMV.length?(allMV.reduce((a,b)=>a+b)/allMV.length).toFixed(1):null;
-      return `<tr style="border-top:2px solid var(--border)"><td><div class="subj-cell"><div class="name">🎵 MAPEH</div><div class="type">Core · auto-avg</div></div></td>${mAvgCells}<td class="c"><span class="avg-chip ${cc(mOv)}" style="font-weight:800">${mOv!=null?mOv+'%':'—'}</span></td></tr>${pairRows}`;
+      const addBtn = (isAdmin && !subj.isMapeh) ? `<button class="ai-del" style="margin-left:4px" onclick="requireAdmin(()=>addMultiRow('${sec.id}',${i}))" title="Add teacher row">➕</button>` : '';
+      return `<tr style="border-top:2px solid var(--border)"><td><div class="subj-cell"><div class="name">${label}${addBtn}</div><div class="type">${typeText}</div></div></td>${mAvgCells}<td class="c"><span class="avg-chip ${cc(mOv)}" style="font-weight:800">${mOv!=null?mOv+'%':'—'}</span></td></tr>${pairRows}`;
     }
+    const multiBtn = (isAdmin && subj.name.trim().toUpperCase()==='TLE') ? `<button class="ai-del" style="margin-left:4px" onclick="requireAdmin(()=>addMultiRow('${sec.id}',${i}))" title="Split TLE into multiple teacher rows">👥</button>` : '';
     const qCells=QS.map(q=>{
       const locked=isLocked(t,q.key);
       const raw=getMPS(sec.id,t,i,q.key);
@@ -1520,7 +1525,7 @@ function renderEncode(){
     }).join('');
     const rv=QS.map(q=>normVal(getMPS(sec.id,t,i,q.key))).filter(v=>v!==null);
     const ra=rv.length?(rv.reduce((a,b)=>a+b)/rv.length).toFixed(1):null;
-    return `<tr><td><div class="subj-cell"><div class="name">${subj.name}</div><div class="type">${subj.type||'—'}</div></div></td>${qCells}<td class="c"><span class="avg-chip ${cc(ra)}">${ra!=null?ra+'%':'—'}</span></td></tr>`;
+    return `<tr><td><div class="subj-cell"><div class="name">${subj.name}${multiBtn}</div><div class="type">${subj.type||'—'}</div></div></td>${qCells}<td class="c"><span class="avg-chip ${cc(ra)}">${ra!=null?ra+'%':'—'}</span></td></tr>`;
   }).join('');
 
   const editBtn=isAdmin?`<button class="btn btn-outline btn-sm" onclick="requireAdmin(()=>openEditSectionName('${sec.id}'))" title="Rename section name">📝 Rename</button><button class="btn btn-outline btn-sm" onclick="requireAdmin(()=>openEditSubjects('${sec.id}'))">✏️ Edit Subjects</button>`:`<span style="font-size:11px;color:var(--ink3)">🔒 Admin edits subjects</span>`;
@@ -1569,6 +1574,30 @@ function saveMapeh(el){
   updateSidebar();
   if(state.currentPage==='dashboard') renderDashboard();
 }
+// Split a normal subject (e.g. TLE) into multiple rows — one per teacher/specialization —
+// that auto-average into the subject's overall score, the same way MAPEH's Music&Arts /
+// P.E.&Health rows do. Also lets you add more rows to an already-split subject.
+function addMultiRow(secId,i){
+  const sec=getSecs().find(s=>s.id===secId); if(!sec) return;
+  const subj=sec.subjects[i]; if(!subj) return;
+  const label=prompt(`Pangalan ng bagong row para sa "${subj.name}" (hal. "TLE - ICT (Ma'am Cruz)"):`);
+  if(!label || !label.trim()) return;
+  if(!subj.mapehPairs) subj.mapehPairs=[];
+  subj.mapehPairs.push({label:label.trim(),subs:[]});
+  persist();
+  renderEncode();
+  toast(`👥 Naidagdag ang row na "${label.trim()}"`);
+}
+function removeMultiRow(secId,i,pi){
+  const sec=getSecs().find(s=>s.id===secId); if(!sec) return;
+  const subj=sec.subjects[i]; if(!subj || !subj.mapehPairs) return;
+  const removed=subj.mapehPairs[pi];
+  if(!confirm(`Alisin ang row na "${removed?.label||''}"? Hindi ito babawiin.`)) return;
+  subj.mapehPairs.splice(pi,1);
+  persist();
+  renderEncode();
+  toast('🗑 Naalis ang row.');
+}
 // Auto-save flash indicator
 let _flashT;
 function flashSaved(){
@@ -1602,7 +1631,7 @@ function renderSettings(){
   // ── SECTION CARDS ──
   const cards=secs.map(sec=>{
     const subjItems=sec.subjects.map(s=>{
-      if(s.isMapeh){ const pairs=(s.mapehPairs||[]).map(p=>`<span style="font-size:10px;background:var(--accentbg);color:var(--accent);padding:1px 6px;border-radius:8px;font-weight:700">${p.label}</span>`).join(' '); return `<div class="subj-item-sm"><span class="sn">🎵 MAPEH</span><span class="st" style="display:flex;gap:3px;flex-wrap:wrap">${pairs}</span></div>`; }
+      if(s.mapehPairs && s.mapehPairs.length){ const label=s.isMapeh?'🎵 MAPEH':s.name; const pairs=s.mapehPairs.map(p=>`<span style="font-size:10px;background:var(--accentbg);color:var(--accent);padding:1px 6px;border-radius:8px;font-weight:700">${p.label}</span>`).join(' '); return `<div class="subj-item-sm"><span class="sn">${label}</span><span class="st" style="display:flex;gap:3px;flex-wrap:wrap">${pairs}</span></div>`; }
       return `<div class="subj-item-sm"><span class="sn">${s.name}</span><span class="st">${s.type||'—'}</span></div>`;
     }).join('');
     return `<div class="config-card"><div class="config-card-head"><div><div class="config-card-title">${sec.name}</div><div style="font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace;margin-top:1px">${sec.subjects.length} subjects · ${sy}</div></div><div style="display:flex;gap:5px"><button class="btn btn-outline btn-xs" onclick="openEditSectionName('${sec.id}')" title="Rename section name">📝</button><button class="btn btn-outline btn-xs" onclick="openEditSubjects('${sec.id}')" title="Add/remove/rename subjects">✏️</button><button class="btn btn-red btn-xs" onclick="deleteSection('${sec.id}')">🗑</button></div></div><div class="config-card-body">${subjItems||'<div style="color:var(--ink3);font-size:11px;text-align:center;padding:8px">No subjects.</div>'}</div></div>`;
@@ -1699,7 +1728,7 @@ function exportCSV(){
     hd.sections.forEach(sec=>{ SUBJ_ORDER.forEach(subj=>{ const v=sec.subjects[subj]; if(v!=null) rows.push([`"${SY_CONFIG[sy].label}"`,`"${sec.name}"`,`"${subj}"`,'Historical','All','Full Year',v.toFixed(2)].join(',')); }); });
   } else {
     const secs=getSecs();
-    [1,2,3].forEach(t=>{ secs.forEach(sec=>{ sec.subjects.forEach((subj,i)=>{ if(subj.isMapeh){ const pairs=subj.mapehPairs||[]; pairs.forEach((pair,pi)=>{ QS.forEach(q=>{ const v=getMPS(sec.id,t,`m${i}_${pi}`,q.key); const d=(v!==''&&v!=null)?parseFloat(v):''; rows.push([`"${SY_CONFIG[sy].label}"`,`"${sec.name}"`,`"MAPEH-${pair.label}"`,'MAPEH',t,`"${q.label}"`,d].join(',')); }); }); } else { QS.forEach(q=>{ const v=getMPS(sec.id,t,i,q.key); const d=(v!==''&&v!=null)?parseFloat(v):''; rows.push([`"${SY_CONFIG[sy].label}"`,`"${sec.name}"`,`"${subj.name}"`,`"${subj.type||''}"`  ,t,`"${q.label}"`,d].join(',')); }); } }); }); });
+    [1,2,3].forEach(t=>{ secs.forEach(sec=>{ sec.subjects.forEach((subj,i)=>{ if(subj.mapehPairs && subj.mapehPairs.length){ const pairs=subj.mapehPairs; const subjLabel=subj.isMapeh?'MAPEH':subj.name; pairs.forEach((pair,pi)=>{ QS.forEach(q=>{ const v=getMPS(sec.id,t,`m${i}_${pi}`,q.key); const d=(v!==''&&v!=null)?parseFloat(v):''; rows.push([`"${SY_CONFIG[sy].label}"`,`"${sec.name}"`,`"${subjLabel}-${pair.label}"`,`"${subjLabel}"`,t,`"${q.label}"`,d].join(',')); }); }); } else { QS.forEach(q=>{ const v=getMPS(sec.id,t,i,q.key); const d=(v!==''&&v!=null)?parseFloat(v):''; rows.push([`"${SY_CONFIG[sy].label}"`,`"${sec.name}"`,`"${subj.name}"`,`"${subj.type||''}"`  ,t,`"${q.label}"`,d].join(',')); }); } }); }); });
   }
   const blob=new Blob([rows.join('\n')],{type:'text/csv'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`MPS_${sy}.csv`; a.click();
