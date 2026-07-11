@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MPS Encoder · Tugdan NHS</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--surface2:#f0ede8;
+  --border:#e2ddd7;--border2:#ccc8c2;
+  --ink:#1a1714;--ink2:#5a534d;--ink3:#9a9390;
+  --accent:#d4500a;--accent2:#f0832a;--accentbg:#fdf2eb;
+  --green:#1a7a4a;--greenbg:#edf7f2;
+  --yellow:#b07800;--yellowbg:#fdf8e8;
+  --red:#c0282a;--redbg:#fdf0f0;
+  --blue:#1d5fa8;--bluebg:#eef4fc;
+  --purple:#6b21a8;--purplebg:#f5f0ff;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.04);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.14),0 2px 8px rgba(0,0,0,.06);
+}
+html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+.shell{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* TOP BAR */
+.topbar{background:var(--ink);display:flex;align-items:center;height:52px;padding:0 0 0 20px;flex-shrink:0;gap:0}
+.brand{display:flex;align-items:center;gap:10px;margin-right:20px}
+.brand-badge{background:var(--accent);color:#fff;font-weight:800;font-size:11px;letter-spacing:1px;padding:3px 8px;border-radius:5px}
+.brand-name{font-size:13px;font-weight:700;color:#fff;white-space:nowrap}
+.brand-school{font-size:10px;color:rgba(255,255,255,.35);font-family:'JetBrains Mono',monospace;margin-left:4px}
+.tnav-wrap{display:flex;height:100%}
+.tnav{display:flex;align-items:center;gap:5px;padding:0 14px;height:100%;cursor:pointer;font-size:12px;font-weight:600;color:rgba(255,255,255,.45);border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap}
+.tnav:hover{color:rgba(255,255,255,.85)}
+.tnav.active{color:#fff;border-bottom-color:var(--accent2)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px;padding-right:14px}
+
+/* SY + ADMIN BAR */
+.sybar{background:#0d1520;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;height:42px;padding:0 18px;flex-shrink:0;gap:12px}
+.sybar-label{font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,.28);text-transform:uppercase;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.sy-select{background:#1a2535;border:1px solid rgba(255,255,255,.15);border-radius:7px;color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:5px 30px 5px 12px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,.4)'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;min-width:140px;transition:all .15s}
+.sy-select:hover{border-color:rgba(255,255,255,.3)}
+.sy-select option{background:#1a2535;color:#fff}
+.sy-type-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:'JetBrains Mono',monospace}
+.sy-type-live{background:rgba(26,122,74,.25);color:#4ade80;border:1px solid rgba(74,222,128,.25)}
+.sy-type-hist{background:rgba(29,95,168,.2);color:#60a5fa;border:1px solid rgba(96,165,250,.25)}
+.sybar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.admin-btn{display:flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;cursor:pointer;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:rgba(255,255,255,.38);transition:all .15s}
+.admin-btn:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7)}
+.admin-btn.unlocked{background:rgba(26,122,74,.22);border-color:rgba(74,222,128,.3);color:#4ade80}
+
+/* TERM BAR */
+.termbar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;height:42px;padding:0 18px;flex-shrink:0}
+.termbar-label{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--ink3);text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-right:12px}
+.term-tabs{display:flex;gap:4px}
+.ttab{padding:5px 15px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700;border:1px solid transparent;background:none;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink2);transition:all .15s;display:flex;align-items:center;gap:5px}
+.ttab:hover{background:var(--surface2)}
+.ttab.active{background:var(--ink);color:#fff}
+.lock-icon{font-size:11px}
+.termbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.comp-pill{display:flex;align-items:center;gap:5px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--ink3)}
+.cpill-bar{width:64px;height:4px;background:var(--border);border-radius:10px;overflow:hidden}
+.cpill-fill{height:100%;border-radius:10px;background:var(--green);transition:width .4s}
+
+/* BODY */
+.body-wrap{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:224px;min-width:224px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-head{padding:11px 13px 9px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sidebar-head-title{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--ink3);text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.btn-icon{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--ink2);transition:all .15s}
+.btn-icon:hover{background:var(--accentbg);border-color:var(--accent);color:var(--accent)}
+.btn-icon.locked-icon{opacity:.3;cursor:not-allowed}
+.sec-list{flex:1;overflow-y:auto;padding:5px}
+.sec-item{display:flex;align-items:center;padding:7px 8px;border-radius:7px;cursor:pointer;transition:all .12s;border:1px solid transparent;margin-bottom:2px}
+.sec-item:hover{background:var(--surface2)}
+.sec-item.active{background:var(--accentbg);border-color:rgba(212,80,10,.25)}
+.sec-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);margin-right:8px;flex-shrink:0;transition:background .2s}
+.sec-item.active .sec-dot,.sec-item.has-data .sec-dot{background:var(--accent)}
+.sec-name{font-size:12px;font-weight:600;flex:1}
+.sec-item.active .sec-name{color:var(--accent)}
+.sec-count{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--ink3);margin-right:3px}
+.sec-del{width:18px;height:18px;border-radius:4px;background:none;border:none;cursor:pointer;color:var(--ink3);font-size:11px;display:none;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s}
+.sec-item:hover .sec-del{display:flex}
+.sec-del:hover{background:var(--redbg);color:var(--red)}
+.sidebar-footer{padding:10px;border-top:1px solid var(--border)}
+.smps-box{background:var(--surface2);border-radius:8px;padding:10px;text-align:center}
+.smps-val{font-size:22px;font-weight:800;color:var(--accent);font-family:'JetBrains Mono',monospace}
+.smps-lbl{font-size:10px;color:var(--ink3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-top:1px}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;background:var(--bg)}
+
+/* DASHBOARD */
+.dash-wrap{padding:20px 24px}
+.dash-hero{background:var(--ink);border-radius:12px;padding:22px 26px;margin-bottom:16px;color:#fff;position:relative;overflow:hidden}
+.dash-hero::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;background:radial-gradient(circle,rgba(212,80,10,.35) 0%,transparent 70%);border-radius:50%}
+.hero-sy{font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.38);margin-bottom:4px;letter-spacing:1px}
+.hero-title{font-size:19px;font-weight:800;margin-bottom:2px}
+.hero-sub{font-size:12px;color:rgba(255,255,255,.45)}
+.hero-stats{display:flex;gap:20px;margin-top:16px;flex-wrap:wrap}
+.hero-stat .v{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent2)}
+.hero-stat .l{font-size:10px;color:rgba(255,255,255,.38);margin-top:1px}
+
+/* YEARLY MPS BAND */
+.yearly-band{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.yearly-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px}
+.yc-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.yc-icon.live{background:var(--accentbg)}
+.yc-icon.hist{background:var(--bluebg)}
+.yc-info .sy{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--ink3);margin-bottom:2px}
+.yc-info .mps{font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.yc-info .mps.g{color:var(--green)}.yc-info .mps.y{color:var(--yellow)}.yc-info .mps.r{color:var(--red)}.yc-info .mps.n{color:var(--ink3)}
+.yc-info .lbl{font-size:10px;color:var(--ink3);font-weight:600}
+
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:900px){.dash-grid{grid-template-columns:1fr}}
+.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.dc-head{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--ink3);text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:10px}
+.rank-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)}
+.rank-row:last-child{border-bottom:none}
+.rank-n{width:16px;font-size:10px;font-weight:700;color:var(--ink3);font-family:'JetBrains Mono',monospace}
+.rank-n.top{color:var(--accent)}
+.rank-bwrap{flex:1}
+.rank-blabel{display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px}
+.rank-blabel .rn{font-weight:600}
+.rank-blabel .rv{font-family:'JetBrains Mono',monospace;font-weight:600}
+.rank-bar{height:4px;background:var(--surface2);border-radius:10px;overflow:hidden}
+.rank-fill{height:100%;border-radius:10px;transition:width .5s}
+.rv.g,.rank-fill.g{color:var(--green);background:var(--green)}
+.rv.y,.rank-fill.y{color:var(--yellow);background:var(--yellow)}
+.rv.r,.rank-fill.r{color:var(--red);background:var(--red)}
+.rv.n{color:var(--ink3)}
+.empty-dash{text-align:center;padding:20px 0;color:var(--ink3);font-size:12px}
+
+/* SUMMARY TABLE */
+.summary-section{margin-bottom:16px}
+.summary-section-title{font-size:13px;font-weight:800;padding:10px 14px;background:var(--ink);color:#fff;border-radius:10px 10px 0 0;display:flex;align-items:center;gap:8px}
+.summary-section-title .sy-pill{font-size:10px;font-family:'JetBrains Mono',monospace;background:var(--accent);color:#fff;padding:2px 8px;border-radius:10px}
+.sum-table-wrap{background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{padding:8px 11px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;white-space:nowrap;background:var(--surface)}
+th.c,td.c{text-align:center}
+td{padding:8px 11px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,0,0,.015)}
+.subj-cell .name{font-weight:700;font-size:13px}
+.subj-cell .type{font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+.avg-chip{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.avg-chip.g{background:var(--greenbg);color:var(--green)}
+.avg-chip.g2{background:var(--green);color:#fff}
+.avg-chip.y{background:var(--yellowbg);color:var(--yellow)}
+.avg-chip.r{background:var(--redbg);color:var(--red)}
+.avg-chip.n{background:var(--surface2);color:var(--ink3)}
+.avg-chip.b{background:var(--bluebg);color:var(--blue)}
+.tot-row td{background:var(--surface2);font-weight:800}
+
+/* ENCODE */
+.entry-wrap{padding:20px 24px}
+.entry-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.entry-title{font-size:18px;font-weight:800}
+.entry-sub{font-size:11px;color:var(--ink3);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 12px}
+.stat-box .sv{font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.stat-box .sl{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-top:1px}
+.sv.orange{color:var(--accent)}.sv.green{color:var(--green)}.sv.yellow{color:var(--yellow)}.sv.blue{color:var(--blue)}
+.mps-table-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.mtcard-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mtcard-head h3{font-size:12px;font-weight:700;flex:1}
+.legend{display:flex;gap:8px;align-items:center}
+.leg-item{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--ink3)}
+.leg-dot{width:7px;height:7px;border-radius:50%}
+
+/* LOCK BADGE on ST header */
+.st-head-wrap{display:flex;align-items:center;justify-content:center;gap:4px;flex-direction:column}
+.st-lk{font-size:9px;padding:1px 5px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-weight:700;white-space:nowrap}
+.st-lk.locked{background:var(--redbg);color:var(--red)}
+.st-lk.open{background:var(--greenbg);color:var(--green)}
+
+.inp-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.mps-inp{width:82px;padding:6px 20px 6px 7px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;text-align:right;outline:none;transition:all .15s;-moz-appearance:textfield}
+.mps-inp::-webkit-outer-spin-button,.mps-inp::-webkit-inner-spin-button{-webkit-appearance:none}
+.mps-inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,80,10,.1);background:#fff}
+.mps-inp.v-g{background:var(--greenbg);border-color:rgba(26,122,74,.3);color:var(--green)}
+.mps-inp.v-y{background:var(--yellowbg);border-color:rgba(176,120,0,.3);color:var(--yellow)}
+.mps-inp.v-r{background:var(--redbg);border-color:rgba(192,40,42,.3);color:var(--red)}
+.mps-inp:disabled{opacity:.55;cursor:not-allowed;background:var(--surface2)}
+.pct{position:absolute;right:6px;font-size:10px;color:var(--ink3);pointer-events:none;font-family:'JetBrains Mono',monospace}
+.locked-cell{font-size:11px;color:var(--ink3);font-family:'JetBrains Mono',monospace;font-style:italic}
+
+/* SETUP */
+.config-wrap{padding:20px 24px}
+.config-header{margin-bottom:16px}
+.config-title{font-size:18px;font-weight:800}
+.config-sub{font-size:12px;color:var(--ink2);margin-top:3px}
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:960px){.config-grid{grid-template-columns:1fr}}
+.config-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.config-card-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.config-card-title{font-size:13px;font-weight:700}
+.config-card-body{padding:10px;display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto}
+.subj-item-sm{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--surface2);border-radius:6px}
+.subj-item-sm .sn{flex:1;font-size:12px;font-weight:600}
+.subj-item-sm .st{font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace}
+.add-card{border-style:dashed;cursor:pointer}
+.add-card:hover{background:var(--accentbg);border-color:rgba(212,80,10,.3)}
+.add-card-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;color:var(--ink3);gap:5px}
+.locked-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;text-align:center;gap:8px}
+.locked-overlay .lock-ico{font-size:44px;margin-bottom:4px}
+.locked-overlay h3{font-size:17px;font-weight:800}
+.locked-overlay p{font-size:12px;color:var(--ink2);max-width:280px}
+
+/* Lock manager panel */
+.lock-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.lock-panel-title{font-size:12px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.lock-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.lock-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lock-item-label{font-size:12px;font-weight:600}
+.lock-item-sub{font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+.lock-toggle{width:36px;height:20px;border-radius:20px;border:none;cursor:pointer;transition:all .2s;position:relative;flex-shrink:0}
+.lock-toggle.on{background:var(--red)}
+.lock-toggle.off{background:var(--green)}
+.lock-toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:3px;transition:left .2s}
+.lock-toggle.on::after{left:19px}
+.lock-toggle.off::after{left:3px}
+
+/* HIST SY paste area */
+.hist-wrap{padding:20px 24px}
+.hist-header{margin-bottom:14px}
+.hist-title{font-size:18px;font-weight:800}
+.hist-sub{font-size:12px;color:var(--ink2);margin-top:3px}
+.paste-card{background:var(--surface);border:2px dashed var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+.paste-card-title{font-size:13px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.paste-card-sub{font-size:11px;color:var(--ink3);margin-bottom:10px}
+.paste-area{width:100%;min-height:100px;padding:10px 12px;border:1px solid var(--border);border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;outline:none;background:var(--bg);color:var(--ink);transition:border-color .15s}
+.paste-area:focus{border-color:var(--accent);background:#fff}
+.hist-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;overflow-x:auto}
+.hist-table-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.hist-table-head h3{font-size:13px;font-weight:700;flex:1}
+
+/* BUTTONS */
+.btn{cursor:pointer;border:none;border-radius:7px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:13px;padding:8px 16px;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn-sm{padding:6px 11px;font-size:12px}
+.btn-xs{padding:4px 8px;font-size:11px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#b83f06}
+.btn-dark{background:var(--ink);color:#fff}
+.btn-dark:hover{background:#333}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--ink2)}
+.btn-outline:hover{border-color:var(--ink);color:var(--ink)}
+.btn-red{background:var(--redbg);color:var(--red);border:1px solid rgba(192,40,42,.2)}
+.btn-red:hover{background:#fce0e0}
+.btn-blue{background:var(--bluebg);color:var(--blue);border:1px solid rgba(29,95,168,.2)}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.38);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:12px;padding:24px;width:500px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg);transform:translateY(10px);transition:transform .2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-title{font-size:16px;font-weight:800;margin-bottom:3px}
+.modal-sub{font-size:12px;color:var(--ink3);margin-bottom:16px}
+.modal-field{margin-bottom:12px}
+.modal-field label{display:block;font-size:11px;font-weight:700;color:var(--ink2);margin-bottom:4px}
+.modal-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:16px}
+.text-input{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;background:var(--surface);color:var(--ink);outline:none;transition:border-color .15s}
+.text-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,80,10,.1)}
+.subj-input-row{display:flex;gap:6px}
+.subj-added-item{display:flex;align-items:center;gap:6px;padding:7px 9px;background:var(--surface2);border-radius:7px}
+.ai-n{flex:1;font-size:12px;font-weight:600}
+.ai-t{font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace}
+.ai-del{background:none;border:none;cursor:pointer;color:var(--ink3);font-size:13px;padding:1px 3px;border-radius:3px;transition:all .1s}
+.ai-del:hover{color:var(--red);background:var(--redbg)}
+
+/* PIN MODAL */
+.pin-modal{background:var(--surface);border-radius:16px;padding:28px 24px;width:310px;max-width:94vw;text-align:center;box-shadow:var(--shadow-lg);transform:translateY(10px);transition:transform .2s}
+.modal-overlay.open .pin-modal{transform:translateY(0)}
+.pin-ico{font-size:32px;margin-bottom:8px}
+.pin-title{font-size:16px;font-weight:800;margin-bottom:3px}
+.pin-sub{font-size:12px;color:var(--ink3);margin-bottom:16px}
+.pin-dots{display:flex;justify-content:center;gap:9px;margin-bottom:16px}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:2px solid var(--border2);background:transparent;transition:all .15s}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent)}
+.pin-dot.error{background:var(--red);border-color:var(--red)}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:200px;margin:0 auto}
+.pin-key{padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:16px;font-weight:700;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .1s;color:var(--ink)}
+.pin-key:hover{background:var(--border)}
+.pin-key:active{transform:scale(.95)}
+.pin-err{font-size:12px;color:var(--red);font-weight:600;min-height:16px;margin-top:8px}
+
+/* Empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:45vh;text-align:center}
+.empty-state .ei{font-size:38px;margin-bottom:8px}
+.empty-state h3{font-size:16px;font-weight:800;margin-bottom:4px}
+.empty-state p{font-size:12px;color:var(--ink2);max-width:280px;line-height:1.6}
+
+/* Auto-save indicator */
+.autosave-indicator{
+  position:fixed;top:56px;right:14px;z-index:1500;
+  background:var(--green);color:#fff;
+  font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;
+  padding:5px 11px;border-radius:20px;
+  display:flex;align-items:center;gap:5px;
+  opacity:0;transform:translateY(-6px);
+  transition:opacity .2s,transform .2s;
+  pointer-events:none;
+}
+.autosave-indicator.visible{opacity:1;transform:translateY(0)}
+
+/* Toast */
+.toast{position:fixed;bottom:18px;right:18px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:9px;font-size:12px;font-weight:600;z-index:2000;transform:translateY(20px);opacity:0;transition:all .25s;pointer-events:none;border-left:3px solid var(--accent2)}
+.toast.show{transform:translateY(0);opacity:1}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+
+/* ══════════════════════════════════
+   MOBILE STYLES (≤ 768px)
+══════════════════════════════════ */
+@media(max-width:768px){
+
+  /* Shell: allow natural scroll on mobile */
+  html,body{height:100%;overflow:hidden}
+  .shell{height:100vh;height:100dvh}
+
+  /* TOP BAR — compact */
+  .topbar{height:48px;padding:0 10px 0 12px}
+  .brand-school,.brand-name + .brand-school{display:none}
+  .brand-name{font-size:12px}
+  .brand-badge{font-size:10px;padding:2px 6px}
+  .brand{margin-right:10px}
+  /* Hide top nav text links — replaced by bottom nav */
+  .tnav-wrap{display:none}
+  /* Hide CSV and backup buttons in topbar on mobile to save space */
+  .topbar-right .btn:not(:last-child){display:none}
+  .topbar-right{padding-right:8px;gap:5px}
+  .topbar-right .btn{font-size:11px;padding:6px 10px}
+
+  /* SY BAR — single row compact */
+  .sybar{height:auto;padding:6px 12px;flex-wrap:wrap;gap:6px}
+  .sybar-label{font-size:9px;letter-spacing:1px}
+  .sy-select{font-size:11px;min-width:120px;padding:4px 26px 4px 9px}
+  .sy-type-badge{font-size:9px;padding:1px 6px}
+  .sybar-right{margin-left:auto}
+  .admin-btn{font-size:9px;padding:3px 9px}
+
+  /* TERM BAR — scrollable row */
+  .termbar{height:auto;padding:6px 10px;overflow-x:auto;flex-wrap:nowrap}
+  .termbar-label{display:none}
+  .term-tabs{gap:5px;flex-shrink:0}
+  .ttab{padding:6px 12px;font-size:11px;white-space:nowrap}
+  .comp-pill{flex-shrink:0;font-size:10px}
+  .cpill-bar{width:44px}
+
+  /* BODY WRAP — stack vertically, no sidebar */
+  .body-wrap{flex-direction:column;overflow:hidden}
+
+  /* SIDEBAR — convert to slide-in drawer */
+  .sidebar{
+    position:fixed;top:0;left:0;bottom:0;z-index:500;
+    width:82vw;max-width:300px;
+    transform:translateX(-100%);
+    transition:transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow:var(--shadow-lg);
+    border-right:none;
+  }
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);
+    z-index:499;opacity:0;transition:opacity .28s;
+  }
+  .sidebar-overlay.open{display:block;opacity:1}
+
+  /* MAIN — full width, bottom padding for bottom nav */
+  .main{flex:1;overflow-y:auto;padding-bottom:68px}
+
+  /* BOTTOM NAV */
+  .bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    background:var(--ink);border-top:1px solid rgba(255,255,255,.1);
+    z-index:400;height:60px;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .bnav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:3px;cursor:pointer;
+    background:none;border:none;color:rgba(255,255,255,.4);
+    font-family:'Plus Jakarta Sans',sans-serif;font-size:9px;
+    font-weight:700;transition:all .15s;padding:6px 4px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .bnav-item .bico{font-size:18px;line-height:1}
+  .bnav-item.active{color:#fff}
+  .bnav-item.active .bico-wrap{
+    background:var(--accent);border-radius:10px;
+    padding:2px 14px;margin-bottom:1px;
+  }
+  /* sections toggle button in bottom nav */
+  .bnav-sections-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:3px;cursor:pointer;
+    background:none;border:none;color:rgba(255,255,255,.4);
+    font-family:'Plus Jakarta Sans',sans-serif;font-size:9px;
+    font-weight:700;padding:6px 4px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .bnav-sections-btn .bico{font-size:18px;line-height:1}
+
+  /* DASHBOARD */
+  .dash-wrap{padding:12px 12px 0}
+  .dash-hero{padding:16px 16px;border-radius:10px;margin-bottom:12px}
+  .hero-title{font-size:15px}
+  .hero-sub{font-size:11px}
+  .hero-stats{gap:14px;margin-top:12px}
+  .hero-stat .v{font-size:18px}
+  .hero-stat .l{font-size:9px}
+  .yearly-band{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .yearly-card{padding:10px 11px;gap:10px}
+  .yc-icon{width:34px;height:34px;font-size:15px}
+  .yc-info .mps{font-size:16px}
+  .yc-info .sy{font-size:9px}
+  .dash-grid{grid-template-columns:1fr;gap:10px;margin-bottom:12px}
+  .dash-card{padding:12px 13px}
+
+  /* SUMMARY TABLES — horizontal scroll */
+  .sum-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .summary-section{margin-bottom:12px}
+  .summary-section-title{font-size:12px;padding:9px 12px;border-radius:8px 8px 0 0}
+  table th,table td{padding:7px 9px;font-size:11px;white-space:nowrap}
+  .avg-chip{font-size:10px;padding:2px 6px}
+
+  /* ENCODE */
+  .entry-wrap{padding:12px 12px 0}
+  .entry-header{flex-direction:column;gap:8px;margin-bottom:10px}
+  .entry-title{font-size:16px}
+  .entry-sub{font-size:10px}
+  .stat-row{grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:12px}
+  .stat-box{padding:9px 10px}
+  .stat-box .sv{font-size:16px}
+  .stat-box .sl{font-size:9px}
+  .mps-table-card{border-radius:9px}
+  .mtcard-head{padding:9px 12px;flex-wrap:wrap;gap:6px}
+  .mtcard-head h3{font-size:11px}
+  /* Make encode table horizontally scrollable */
+  .mps-table-card{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .mps-inp{width:74px;font-size:12px;padding:7px 18px 7px 6px}
+  /* Bigger tap targets on inputs */
+  .mps-inp{min-height:40px}
+  .pct{right:5px;font-size:9px}
+
+  /* SETUP */
+  .config-wrap{padding:12px 12px 0}
+  .config-title{font-size:16px}
+  .config-sub{font-size:11px}
+  .config-grid{grid-template-columns:1fr;gap:10px}
+  .lock-panel{padding:12px}
+  .lock-grid{grid-template-columns:1fr 1fr;gap:6px}
+  .lock-item{padding:8px 9px}
+  .lock-item-label{font-size:11px}
+  .lock-item-sub{font-size:9px}
+
+  /* MODALS */
+  .modal{width:95vw;padding:18px;border-radius:14px 14px 0 0;position:fixed;bottom:0;left:0;right:0;max-height:90vh;border-radius:14px}
+  .modal-overlay{align-items:flex-end}
+  .pin-modal{width:96vw;padding:22px 18px;border-radius:18px 18px 0 0;position:fixed;bottom:0;left:0;right:0}
+  .modal-overlay .pin-modal{border-radius:18px}
+  .pin-keypad{gap:8px;max-width:220px}
+  .pin-key{padding:14px;font-size:18px}
+  .text-input{font-size:16px;padding:10px 12px} /* 16px prevents iOS zoom */
+
+  /* LOCKED OVERLAY */
+  .locked-overlay{min-height:40vh;padding:20px}
+
+  /* SEC DEL always visible on mobile (no hover) */
+  .sec-del{display:flex !important}
+
+  /* Bigger section items for tap */
+  .sec-item{padding:11px 10px;margin-bottom:3px}
+  .sec-name{font-size:13px}
+}
+
+@media(max-width:400px){
+  .yearly-band{grid-template-columns:1fr}
+  .lock-grid{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .ttab{padding:5px 9px;font-size:10px}
+}
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+<div class="shell">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-badge">MPS</span>
+      <span class="brand-name">Encoder</span>
+      <span class="brand-school">· Tugdan NHS</span>
+    </div>
+    <div class="tnav-wrap">
+      <button class="tnav active" onclick="goTo('dashboard')" id="tnav-dashboard">🏠 Dashboard</button>
+      <button class="tnav" onclick="goTo('encode')"    id="tnav-encode">✏️ Encode MPS</button>
+      <button class="tnav" onclick="requireAdmin(()=>goTo('settings'))" id="tnav-settings">⚙️ Setup</button>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-sm" onclick="exportCSV()" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.18)">⬇ CSV</button>
+      <button class="btn btn-sm" onclick="backupData()" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.15)" title="Download full JSON backup">📦 Backup</button>
+      <button class="btn btn-sm" onclick="restoreData()" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.15)" title="Restore from JSON backup">🔁 Restore</button>
+      <button class="btn btn-sm admin-btn" id="driveBtn" onclick="connectDrive()" style="border-radius:20px" title="I-sync ang data sa sarili mong Google Drive">
+        <span>☁️</span><span>Connect Drive</span>
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="saveData()">💾 Save</button>
+    </div>
+  </div>
+
+  <!-- SY + ADMIN BAR -->
+  <div class="sybar">
+    <span class="sybar-label">School Year</span>
+    <select class="sy-select" id="sySelect" onchange="setSY(this.value)">
+      <option value="2024-2025">2024–2025</option>
+      <option value="2025-2026">2025–2026</option>
+      <option value="2026-2027">2026–2027</option>
+      <option value="2027-2028">2027–2028</option>
+      <option value="2028-2029">2028–2029</option>
+    </select>
+    <span class="sy-type-badge" id="syTypeBadge">LIVE</span>
+    <div class="sybar-right">
+      <button class="admin-btn" id="adminBtn" onclick="toggleAdmin()">
+        <span id="adminIco">🔒</span><span id="adminLbl">Admin</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- TERM BAR -->
+  <div class="termbar" id="termbarWrap">
+    <span class="termbar-label">Term</span>
+    <div class="term-tabs" id="termTabs">
+      <button class="ttab active" onclick="setTerm(1,this)" id="ttab1">
+        <span class="lock-icon" id="tlk1">🔓</span> 1st Term
+      </button>
+      <button class="ttab" onclick="setTerm(2,this)" id="ttab2">
+        <span class="lock-icon" id="tlk2">🔓</span> 2nd Term
+      </button>
+      <button class="ttab" onclick="setTerm(3,this)" id="ttab3">
+        <span class="lock-icon" id="tlk3">🔓</span> 3rd Term
+      </button>
+    </div>
+    <div class="termbar-right">
+      <div class="comp-pill">
+        <span id="compText">0/0</span>
+        <div class="cpill-bar"><div class="cpill-fill" id="compFill" style="width:0%"></div></div>
+        <span id="compPct">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR OVERLAY (mobile tap-to-close) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- BODY -->
+  <div class="body-wrap">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebarWrap">
+      <div class="sidebar-head">
+        <span class="sidebar-head-title">Sections</span>
+        <div style="display:flex;gap:5px">
+          <button class="btn-icon" id="btnAddSection" onclick="requireAdmin(openAddSection)" title="Admin only">＋</button>
+          <button class="btn-icon" id="btnCloseSidebar" onclick="closeSidebar()" style="display:none">✕</button>
+        </div>
+      </div>
+      <div class="sec-list" id="sectionList"></div>
+      <div class="sidebar-footer">
+        <div class="smps-box">
+          <div class="smps-val" id="schoolMPS">—</div>
+          <div class="smps-lbl">School MPS · Term <span id="schoolMPSTerm">1</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div id="page-dashboard"></div>
+      <div id="page-encode"   style="display:none"></div>
+      <div id="page-settings" style="display:none"></div>
+      <div id="page-history"  style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV (mobile only) -->
+  <div class="bottom-nav" id="bottomNav" style="display:none">
+    <button class="bnav-sections-btn" onclick="toggleSidebar()" id="bnavSections">
+      <div class="bico">📋</div>
+      <span>Sections</span>
+    </button>
+    <button class="bnav-item active" onclick="mobileGoTo('dashboard')" id="bnav-dashboard">
+      <div class="bico-wrap"><div class="bico">🏠</div></div>
+      <span>Dashboard</span>
+    </button>
+    <button class="bnav-item" onclick="mobileGoTo('encode')" id="bnav-encode">
+      <div class="bico-wrap"><div class="bico">✏️</div></div>
+      <span>Encode</span>
+    </button>
+    <button class="bnav-item" onclick="requireAdmin(()=>mobileGoTo('settings'))" id="bnav-settings">
+      <div class="bico-wrap"><div class="bico">⚙️</div></div>
+      <span>Setup</span>
+    </button>
+    <button class="bnav-item" onclick="mobileSaveMenu()" id="bnav-save">
+      <div class="bico-wrap"><div class="bico">💾</div></div>
+      <span>Save</span>
+    </button>
+  </div>
+</div>
+
+<!-- PIN MODAL -->
+<div class="modal-overlay" id="modalPin">
+  <div class="pin-modal">
+    <div class="pin-ico"   id="pinIco">🔐</div>
+    <div class="pin-title" id="pinTitle">Admin Login</div>
+    <div class="pin-sub"   id="pinSub">Enter the 4-digit admin PIN</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key" onclick="pinDel()" style="font-size:17px;color:var(--ink2)">⌫</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key" onclick="pinCancel()" style="font-size:11px;color:var(--ink3)">✕</button>
+    </div>
+    <div class="pin-err" id="pinErr"></div>
+  </div>
+</div>
+
+<!-- MODAL: Section -->
+<div class="modal-overlay" id="modalSection">
+  <div class="modal" style="width:530px">
+    <div class="modal-title" id="mSecTitle">Add New Section</div>
+    <div class="modal-sub">Default subjects pre-loaded. Remove any or add extras.</div>
+    <div class="modal-field">
+      <label>Section Name</label>
+      <input type="text" class="text-input" id="mSecName" placeholder="e.g. 7-Rizal, Grade 8 SSC…">
+    </div>
+    <div class="modal-field">
+      <label style="display:flex;justify-content:space-between">
+        <span>Subjects <span style="font-weight:400;color:var(--ink3)">(✕ to remove)</span></span>
+        <span id="mSecSubjCount" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink3)"></span>
+      </label>
+      <div id="mSecSubjList" style="display:flex;flex-direction:column;gap:3px;max-height:210px;overflow-y:auto;margin-top:5px"></div>
+    </div>
+    <div class="modal-field">
+      <label>➕ Add Extra Subject</label>
+      <div class="subj-input-row">
+        <input type="text" class="text-input" id="mSecSubjName" placeholder="Subject name" style="flex:2">
+        <input type="text" class="text-input" id="mSecSubjType" placeholder="Type e.g. Core" style="flex:1.2">
+        <button class="btn btn-outline btn-sm" onclick="addSubjToModal()">＋</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modalSection')">Cancel</button>
+      <button class="btn btn-primary" onclick="commitSection()">Save Section</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Subjects -->
+<div class="modal-overlay" id="modalSubjects">
+  <div class="modal" style="width:530px">
+    <div class="modal-title">Edit Subjects</div>
+    <div class="modal-sub" id="mSubjSub">—</div>
+    <div id="mSubjList" style="display:flex;flex-direction:column;gap:3px;max-height:220px;overflow-y:auto;margin-bottom:10px"></div>
+    <div class="subj-input-row" style="margin-bottom:4px">
+      <input type="text" class="text-input" id="mSubjName" placeholder="Subject name" style="flex:2">
+      <input type="text" class="text-input" id="mSubjType" placeholder="Type" style="flex:1.2">
+      <button class="btn btn-outline btn-sm" onclick="addSubjToEdit()">＋</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modalSubjects')">Cancel</button>
+      <button class="btn btn-primary" onclick="commitSubjects()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="autosave-indicator" id="autoSaveIndicator">✓ Auto-saved</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════
+//  CONSTANTS
+// ════════════════════════════════════════════
+const ADMIN_PIN = '1234'; // ← change this
+
+const SY_CONFIG = {
+  '2024-2025': { label:'2024–2025', type:'historical' },
+  '2025-2026': { label:'2025–2026', type:'historical' },
+  '2026-2027': { label:'2026–2027', type:'live' },
+  '2027-2028': { label:'2027–2028', type:'live' },
+  '2028-2029': { label:'2028–2029', type:'live' },
+};
+
+const QS = [
+  {key:'st1',label:'Summative 1'},
+  {key:'st2',label:'Summative 2'},
+  {key:'st3',label:'Summative 3'},
+];
+
+const DEFAULT_SUBJECTS = [
+  {name:'Filipino',           type:'Core',    isDefault:true},
+  {name:'English',            type:'Core',    isDefault:true},
+  {name:'Mathematics',        type:'Core',    isDefault:true},
+  {name:'Science',            type:'Core',    isDefault:true},
+  {name:'Araling Panlipunan', type:'Core',    isDefault:true},
+  {name:'Values Education',   type:'Core',    isDefault:true},
+  {name:'MAPEH',              type:'Core',    isDefault:true, isMapeh:true,
+   mapehPairs:[
+     {label:'Music & Arts',  subs:['Music','Arts']},
+     {label:'P.E. & Health', subs:['Physical Education','Health']},
+   ]},
+  {name:'TLE',                type:'Applied', isDefault:true},
+];
+
+// PRE-LOADED HISTORICAL DATA from the document
+const HIST_DATA = {
+  '2024-2025': {
+    sections:[
+      {name:'7-RIZAL',     subjects:{Filipino:62,English:66.57,Mathematics:60,Science:52.17,'Araling Panlipunan':63.38,TLE:54.27,'Values Education':74,MAPEH:77.2}},
+      {name:'7-DARWIN',    subjects:{Filipino:71.25,English:78.09,Mathematics:70.12,Science:68,'Araling Panlipunan':84,TLE:62.12,'Values Education':91.2,MAPEH:85.26}},
+      {name:'8-MARIGOLD',  subjects:{Filipino:47.5,English:77.28,Mathematics:44.175,Science:64.19,'Araling Panlipunan':55.84,TLE:68.12,'Values Education':95,MAPEH:68.225}},
+      {name:'8-SSC',       subjects:{Filipino:71.58,English:85.02,Mathematics:39.06,Science:69.02,'Araling Panlipunan':79.14,TLE:72.52,'Values Education':93.75,MAPEH:81.325}},
+      {name:'9-EARTH',     subjects:{Filipino:55,English:50.18,Mathematics:52.06,Science:64.10,'Araling Panlipunan':46.26,TLE:70.68,'Values Education':64.1,MAPEH:72.865}},
+      {name:'9-SSC',       subjects:{Filipino:68.6,English:62.5,Mathematics:76,Science:66.36,'Araling Panlipunan':49.64,TLE:76.17,'Values Education':66.36,MAPEH:82.7}},
+      {name:'10-SSC',      subjects:{Filipino:93.4,English:68.25,Mathematics:37.87,Science:59.09,'Araling Panlipunan':84,TLE:72.61,'Values Education':81.82,MAPEH:83.63}},
+      {name:'10-DIAMOND',  subjects:{Filipino:67.5,English:60.02,Mathematics:64.08,Science:56.36,'Araling Panlipunan':67.6,TLE:83.6,'Values Education':72.1,MAPEH:85.1075}},
+      {name:'10-RUBY',     subjects:{Filipino:85.9,English:49.91,Mathematics:37.87,Science:48.90,'Araling Panlipunan':58,TLE:0,'Values Education':61.54,MAPEH:76.8525}},
+    ],
+    gradeAvg:{
+      'Grade 7': {Filipino:66.635,English:72.33,Mathematics:65.06,Science:60.09,'Araling Panlipunan':73.69,TLE:58.195,'Values Education':82.6,MAPEH:81.23},
+      'Grade 8': {Filipino:59.54,English:81.15,Mathematics:41.62,Science:66.61,'Araling Panlipunan':67.49,TLE:70.32,'Values Education':94.375,MAPEH:74.775},
+      'Grade 9': {Filipino:61.8,English:56.34,Mathematics:64.03,Science:65.23,'Araling Panlipunan':47.95,TLE:73.425,'Values Education':65.23,MAPEH:77.78},
+      'Grade 10':{Filipino:82.27,English:59.39,Mathematics:46.61,Science:54.78,'Araling Panlipunan':69.87,TLE:52.07,'Values Education':71.82,MAPEH:81.86},
+    },
+    schoolAvg:{Filipino:67.56,English:67.30,Mathematics:54.33,Science:61.68,'Araling Panlipunan':64.75,TLE:63.50,'Values Education':78.51,MAPEH:78.18},
+    schoolMPS: 66.98,
+  },
+  '2025-2026': {
+    sections:[
+      {name:'7-RIZAL',     subjects:{Filipino:53.76,English:68.56,Mathematics:50.46,Science:57.84,'Araling Panlipunan':66.22,TLE:73.335,'Values Education':74.42,MAPEH:65.50}},
+      {name:'7-DARWIN',    subjects:{Filipino:74.72,English:71.12,Mathematics:61.26,Science:65.87,'Araling Panlipunan':83.79,TLE:61.1,'Values Education':86.96,MAPEH:80.80}},
+      {name:'8-MARIGOLD',  subjects:{Filipino:55.02,English:60.75,Mathematics:43.57,Science:78.16,'Araling Panlipunan':64.74,TLE:66.03,'Values Education':52.87,MAPEH:74.13}},
+      {name:'8-SUNFLOWER', subjects:{Filipino:61.08,English:55.47,Mathematics:42.22,Science:77.71,'Araling Panlipunan':59.21,TLE:51.35,'Values Education':87.46,MAPEH:75.71}},
+      {name:'8-SSC',       subjects:{Filipino:76.78,English:68.81,Mathematics:54.91,Science:84.58,'Araling Panlipunan':80.31,TLE:36.16,'Values Education':65.03,MAPEH:86.13}},
+      {name:'9-EARTH',     subjects:{Filipino:69.086,English:47.31,Mathematics:66.93,Science:70.46,'Araling Panlipunan':39.66,TLE:null,'Values Education':70.60,MAPEH:71.33}},
+      {name:'9-SSC',       subjects:{Filipino:83.206,English:62.28,Mathematics:72.22,Science:87.76,'Araling Panlipunan':53.90,TLE:null,'Values Education':89.84,MAPEH:82.86}},
+      {name:'10-SSC',      subjects:{Filipino:64.453,English:50.78,Mathematics:60.18,Science:61.87,'Araling Panlipunan':70.31,TLE:null,'Values Education':67.23,MAPEH:72.26}},
+      {name:'10-DIAMOND',  subjects:{Filipino:80.953,English:68.51,Mathematics:68.82,Science:69.55,'Araling Panlipunan':81.74,TLE:null,'Values Education':91.84,MAPEH:85.25}},
+    ],
+    gradeAvg:{
+      'Grade 7': {Filipino:64.24,English:69.84,Mathematics:55.86,Science:61.86,'Araling Panlipunan':75.00,TLE:67.22,'Values Education':80.69,MAPEH:73.15},
+      'Grade 8': {Filipino:64.29,English:61.68,Mathematics:46.90,Science:80.15,'Araling Panlipunan':68.08,TLE:51.18,'Values Education':68.45,MAPEH:78.66},
+      'Grade 9': {Filipino:76.15,English:54.80,Mathematics:69.57,Science:79.11,'Araling Panlipunan':46.78,TLE:76.97,'Values Education':80.22,MAPEH:77.10},
+      'Grade 10':{Filipino:69.35,English:59.65,Mathematics:64.50,Science:65.71,'Araling Panlipunan':76.03,TLE:83.11,'Values Education':83.63,MAPEH:78.75},
+    },
+    schoolAvg:{Filipino:68.50,English:61.49,Mathematics:59.21,Science:71.70,'Araling Panlipunan':66.47,TLE:69.63,'Values Education':78.25,MAPEH:76.91},
+    schoolMPS: 68.96,
+  },
+};
+
+const SUBJ_ORDER = ['Filipino','English','Mathematics','Science','Araling Panlipunan','Values Education','MAPEH','TLE'];
+
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+let state = {
+  syData: {
+    '2026-2027': {sections:[], mps:{}, locks:{}, histPaste:{}},
+    '2027-2028': {sections:[], mps:{}, locks:{}, histPaste:{}},
+    '2028-2029': {sections:[], mps:{}, locks:{}, histPaste:{}},
+  },
+  currentSY:      '2026-2027',
+  currentTerm:    1,
+  currentSection: null,
+  currentPage:    'dashboard',
+};
+let isAdmin       = false;
+let adminCallback = null;
+let editingSectionId         = null;
+let editingSubjectsSectionId = null;
+let modalTempSubjects        = [];
+let editTempSubjects         = [];
+let pinBuffer = '';
+let pinMode   = 'login';
+
+// ─ Storage ─
+const STORAGE_KEY = 'mpsNHS2630';
+const OLD_KEYS    = ['mpsNHS', 'mpsData', 'mpsEncoder']; // legacy keys to migrate from
+
+function persistLocalOnly(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ console.warn('Save failed:',e); }
+}
+function persist(){
+  persistLocalOnly();
+  driveSyncDebounced();
+}
+
+function mergeSavedState(saved){
+  if(!saved) return;
+  // Deep-merge syData: keep defaults for any missing SY, overlay saved data on top
+  if(saved.syData){
+    Object.keys(saved.syData).forEach(sy=>{
+      if(!state.syData[sy]) state.syData[sy]={sections:[],mps:{},locks:{},histPaste:{}};
+      const src=saved.syData[sy];
+      if(src.sections)  state.syData[sy].sections  = src.sections;
+      if(src.mps)       state.syData[sy].mps        = src.mps;
+      if(src.locks)     state.syData[sy].locks      = src.locks;
+      if(src.histPaste) state.syData[sy].histPaste  = src.histPaste;
+    });
+  }
+  // Restore nav state (but validate currentSY still exists)
+  if(saved.currentSY && SY_CONFIG[saved.currentSY])  state.currentSY      = saved.currentSY;
+  if(saved.currentTerm)                               state.currentTerm    = saved.currentTerm;
+  if(saved.currentPage)                               state.currentPage    = saved.currentPage;
+  // currentSection validated below after sections load
+  if(saved.currentSection) state.currentSection = saved.currentSection;
+
+  // Ensure every live SY has required sub-keys
+  Object.keys(state.syData).forEach(sy=>{
+    if(!state.syData[sy].locks)     state.syData[sy].locks     = {};
+    if(!state.syData[sy].histPaste) state.syData[sy].histPaste = {};
+    if(!state.syData[sy].mps)       state.syData[sy].mps       = {};
+    if(!state.syData[sy].sections)  state.syData[sy].sections  = [];
+  });
+}
+
+function loadState(){
+  try{
+    // Try migrating from old storage keys first
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw){
+      for(const ok of OLD_KEYS){
+        const old = localStorage.getItem(ok);
+        if(old){ raw=old; localStorage.setItem(STORAGE_KEY,old); localStorage.removeItem(ok); break; }
+      }
+    }
+    if(!raw) return;
+    mergeSavedState(JSON.parse(raw));
+  }catch(e){ console.warn('Load failed:',e); }
+}
+
+// ─ Google Drive Sync (each teacher's own Drive, via drive.file scope) ─
+const GOOGLE_CLIENT_ID = '391193475360-tfb867viprit9at8kfv97o4oh357n99n.apps.googleusercontent.com';
+const DRIVE_SCOPE      = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_FILENAME   = 'mps-encoder-2627-data.json';
+
+let gTokenClient    = null;
+let gDriveToken     = null;
+let gDriveFileId    = null;
+let gDriveConnected = false;
+let gDriveSyncTimer = null;
+let gDriveBusy      = false;
+
+function initGoogleDrive(){
+  if(!window.google || !google.accounts || !google.accounts.oauth2){ setTimeout(initGoogleDrive, 300); return; }
+  gTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: DRIVE_SCOPE,
+    callback: async (resp)=>{
+      if(resp.error){ toast('❌ Hindi ma-connect ang Google Drive: '+resp.error); return; }
+      gDriveToken = resp.access_token;
+      gDriveConnected = true;
+      sessionStorage.setItem('gDriveWasConnected','1');
+      updateDriveUI();
+      await driveLoad();
+    },
+    error_callback: (err)=>{
+      if(err && err.type==='popup_failed_to_open'){ toast('⚠️ Naka-block ang popup. Payagan ang popups para sa site na ito.'); }
+    }
+  });
+  // Auto-reconnect kung nag-sign in na dati sa session na ito
+  if(sessionStorage.getItem('gDriveWasConnected')==='1'){
+    gTokenClient.requestAccessToken({prompt:''});
+  }
+}
+
+function connectDrive(){
+  if(!gTokenClient){ toast('⏳ Naglo-load pa ang Google sign-in, subukan ulit pagkalipas ng ilang segundo.'); return; }
+  if(gDriveConnected){ disconnectDrive(); return; }
+  gTokenClient.requestAccessToken({prompt:'consent'});
+}
+
+function disconnectDrive(){
+  gDriveConnected = false;
+  gDriveToken     = null;
+  gDriveFileId    = null;
+  sessionStorage.removeItem('gDriveWasConnected');
+  updateDriveUI();
+  toast('🔌 Na-disconnect sa Google Drive. Naka-save pa rin lokal sa browser na ito.');
+}
+
+function updateDriveUI(){
+  const btn = document.getElementById('driveBtn');
+  if(!btn) return;
+  btn.classList.toggle('unlocked', gDriveConnected);
+  btn.innerHTML = gDriveConnected
+    ? '<span>☁️</span><span>Drive Connected</span>'
+    : '<span>☁️</span><span>Connect Drive</span>';
+}
+
+async function driveFindFile(){
+  const q = encodeURIComponent(`name='${DRIVE_FILENAME}' and trashed=false`);
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name,modifiedTime)`,{
+    headers:{ Authorization:'Bearer '+gDriveToken }
+  });
+  if(!res.ok) throw new Error('Drive search failed: '+res.status);
+  const data = await res.json();
+  return (data.files && data.files[0]) || null;
+}
+
+async function driveLoad(){
+  if(!gDriveToken) return;
+  gDriveBusy = true;
+  try{
+    const f = await driveFindFile();
+    if(!f){
+      toast('☁️ Connected sa Drive! Wala pang existing data doon — i-click ang Save para gumawa ng bago.');
+      gDriveBusy = false;
+      return;
+    }
+    gDriveFileId = f.id;
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,{
+      headers:{ Authorization:'Bearer '+gDriveToken }
+    });
+    if(!res.ok) throw new Error('Drive load failed: '+res.status);
+    const saved = await res.json();
+    mergeSavedState(saved);
+    persistLocalOnly();
+    refreshUI();
+    toast('☁️ Na-load ang pinakabagong data mula sa Google Drive!');
+  }catch(e){
+    console.warn('Drive load error:', e);
+    toast('⚠️ Hindi na-load ang data sa Drive. Gagamitin muna ang naka-save sa browser na ito.');
+  }
+  gDriveBusy = false;
+}
+
+async function driveSave(){
+  if(!gDriveConnected || !gDriveToken) return;
+  try{
+    if(!gDriveFileId){
+      const existing = await driveFindFile();
+      if(existing) gDriveFileId = existing.id;
+    }
+    const content  = JSON.stringify(state);
+    const metadata = { name: DRIVE_FILENAME, mimeType:'application/json' };
+    const boundary = '-------mpsencoder' + Date.now();
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${gDriveFileId ? '{}' : JSON.stringify(metadata)}\r\n`+
+      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n`+
+      `--${boundary}--`;
+    const url = gDriveFileId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${gDriveFileId}?uploadType=multipart`
+      : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+    const res = await fetch(url,{
+      method: gDriveFileId ? 'PATCH' : 'POST',
+      headers:{ Authorization:'Bearer '+gDriveToken, 'Content-Type':`multipart/related; boundary=${boundary}` },
+      body
+    });
+    if(!res.ok) throw new Error('Drive save failed: '+res.status);
+    const data = await res.json();
+    gDriveFileId = data.id;
+  }catch(e){
+    console.warn('Drive save error:', e);
+    toast('⚠️ Hindi na-sync sa Google Drive (naka-save pa rin ito sa browser na ito).');
+  }
+}
+
+function driveSyncDebounced(){
+  if(!gDriveConnected) return;
+  clearTimeout(gDriveSyncTimer);
+  gDriveSyncTimer = setTimeout(driveSave, 1200);
+}
+
+// ─ Current SY helpers ─
+const isHistSY = (sy) => SY_CONFIG[sy]?.type === 'historical';
+const curSY    = ()   => state.syData[state.currentSY];
+const getSecs  = ()   => isHistSY(state.currentSY) ? [] : (curSY()?.sections || []);
+function getMPS(sid,term,idx,q){ return curSY()?.mps?.[sid]?.[term]?.[idx]?.[q]??''; }
+function setMPS(sid,term,idx,q,val){
+  const d=curSY(); if(!d) return;
+  if(!d.mps[sid])           d.mps[sid]={};
+  if(!d.mps[sid][term])     d.mps[sid][term]={};
+  if(!d.mps[sid][term][idx])d.mps[sid][term][idx]={};
+  d.mps[sid][term][idx][q]=val;
+}
+function isLocked(term,q){
+  return curSY()?.locks?.[term]?.[q] === true;
+}
+function setLock(term,q,val){
+  const d=curSY(); if(!d) return;
+  if(!d.locks[term]) d.locks[term]={};
+  d.locks[term][q]=val;
+}
+
+// ─ Misc ─
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const normVal = v => { const n=parseFloat(v); return (isNaN(n)||n<0)?null:(n>1?n:n*100); };
+const cc = v => (v===null||v===''||v===undefined)?'n':v>=75?'g':v>=60?'y':'r';
+const deepCopySubs = arr => arr.map(s=>({...s,mapehPairs:s.mapehPairs?s.mapehPairs.map(p=>({...p,subs:[...p.subs]})):undefined}));
+const fmt = v => v!==null&&v!==undefined&&v!==''?parseFloat(v).toFixed(2):'—';
+
+// ─ Averages (live SY) ─
+function subjAvgInSec(sec,i,term){
+  const subj=sec.subjects[i]; if(!subj) return null;
+  if(subj.isMapeh){
+    const pairs=subj.mapehPairs||[];
+    const allV=pairs.flatMap((_,pi)=>QS.map(q=>normVal(getMPS(sec.id,term,`m${i}_${pi}`,q.key))).filter(v=>v!==null));
+    return allV.length?allV.reduce((a,b)=>a+b)/allV.length:null;
+  }
+  const vals=QS.map(q=>normVal(getMPS(sec.id,term,i,q.key))).filter(v=>v!==null);
+  return vals.length?vals.reduce((a,b)=>a+b)/vals.length:null;
+}
+function sectionAvg(sid,term){
+  const sec=getSecs().find(s=>s.id===sid); if(!sec) return null;
+  const vals=[];
+  sec.subjects.forEach((_,i)=>{ const v=subjAvgInSec(sec,i,term); if(v!==null) vals.push(v); });
+  return vals.length?vals.reduce((a,b)=>a+b)/vals.length:null;
+}
+function schoolAvgTerm(term){
+  const vals=getSecs().map(s=>sectionAvg(s.id,term)).filter(v=>v!==null);
+  return vals.length?vals.reduce((a,b)=>a+b)/vals.length:null;
+}
+function filledCount(sid,term){
+  const sec=getSecs().find(s=>s.id===sid); if(!sec) return {filled:0,total:0};
+  let f=0,t=0;
+  sec.subjects.forEach((subj,i)=>{
+    if(subj.isMapeh){
+      const pairs=subj.mapehPairs||[];
+      pairs.forEach((_,pi)=>QS.forEach(q=>{ t++; const v=getMPS(sid,term,`m${i}_${pi}`,q.key); if(v!==''&&v!==null&&v!==undefined) f++; }));
+    } else {
+      QS.forEach(q=>{ t++; const v=getMPS(sid,term,i,q.key); if(v!==''&&v!==null&&v!==undefined) f++; });
+    }
+  });
+  return {filled:f,total:t};
+}
+
+// ─ Yearly school MPS (live SY) ─
+function liveYearlyMPS(sy){
+  const d = state.syData[sy]; if(!d) return null;
+  const secs = d.sections||[];
+  const allVals=[];
+  secs.forEach(sec=>{
+    sec.subjects.forEach((subj,i)=>{
+      [1,2,3].forEach(term=>{
+        if(subj.isMapeh){
+          const pairs=subj.mapehPairs||[];
+          QS.forEach(q=>{
+            const pv=pairs.map((_,pi)=>{ const raw=d.mps?.[sec.id]?.[term]?.[`m${i}_${pi}`]?.[q.key]; return normVal(raw); }).filter(v=>v!==null);
+            if(pv.length) allVals.push(pv.reduce((a,b)=>a+b)/pv.length);
+          });
+        } else {
+          QS.forEach(q=>{ const v=normVal(d.mps?.[sec.id]?.[term]?.[i]?.[q.key]); if(v!==null) allVals.push(v); });
+        }
+      });
+    });
+  });
+  return allVals.length?allVals.reduce((a,b)=>a+b)/allVals.length:null;
+}
+
+// ════════════════════════════════════════════
+//  ADMIN / PIN
+// ════════════════════════════════════════════
+function requireAdmin(cb){ if(isAdmin){cb();return;} adminCallback=cb; openPinModal('login'); }
+function toggleAdmin(){ openPinModal(isAdmin?'logout':'login'); if(!isAdmin) adminCallback=null; }
+function openPinModal(mode){
+  pinMode=mode; pinBuffer='';
+  renderPinDots();
+  document.getElementById('pinErr').textContent='';
+  if(mode==='login'){
+    document.getElementById('pinIco').textContent='🔐';
+    document.getElementById('pinTitle').textContent='Admin Login';
+    document.getElementById('pinSub').textContent='Enter the 4-digit admin PIN';
+  } else {
+    document.getElementById('pinIco').textContent='🔓';
+    document.getElementById('pinTitle').textContent='Lock Admin Mode';
+    document.getElementById('pinSub').textContent='Enter PIN to lock admin mode';
+  }
+  openModal('modalPin');
+}
+function pinKey(d){ if(pinBuffer.length>=4) return; pinBuffer+=d; renderPinDots(); if(pinBuffer.length===4) setTimeout(checkPin,120); }
+function pinDel(){ pinBuffer=pinBuffer.slice(0,-1); renderPinDots(); }
+function pinCancel(){ closeModal('modalPin'); adminCallback=null; pinBuffer=''; }
+function renderPinDots(){ for(let i=0;i<4;i++){ const d=document.getElementById('pd'+i); d.classList.toggle('filled',i<pinBuffer.length); d.classList.remove('error'); } }
+function checkPin(){
+  if(pinBuffer===ADMIN_PIN){
+    isAdmin=pinMode==='login';
+    toast(isAdmin?'🔓 Admin mode enabled':'🔒 Admin mode locked');
+    updateAdminBadge();
+    closeModal('modalPin');
+    pinBuffer='';
+    updateSidebar(); updateTermLockIcons();
+    if(isAdmin&&adminCallback){ adminCallback(); adminCallback=null; }
+    else if(!isAdmin&&state.currentPage==='settings') goTo('dashboard');
+    if(state.currentPage==='settings') renderSettings();
+  } else {
+    for(let i=0;i<4;i++){ const d=document.getElementById('pd'+i); d.classList.add('error'); d.classList.remove('filled'); }
+    document.getElementById('pinErr').textContent='Incorrect PIN. Try again.';
+    setTimeout(()=>{ pinBuffer=''; renderPinDots(); document.getElementById('pinErr').textContent=''; },900);
+  }
+}
+function updateAdminBadge(){
+  const btn=document.getElementById('adminBtn');
+  btn.className='admin-btn'+(isAdmin?' unlocked':'');
+  document.getElementById('adminIco').textContent=isAdmin?'🔓':'🔒';
+  document.getElementById('adminLbl').textContent=isAdmin?'Admin ON':'Admin';
+  const ab=document.getElementById('btnAddSection');
+  if(ab){ ab.className='btn-icon'+(isAdmin?'':' locked-icon'); ab.title=isAdmin?'Add Section':'Admin only'; }
+}
+function updateTermLockIcons(){
+  [1,2,3].forEach(t=>{
+    const allLocked = QS.every(q=>isLocked(t,q.key));
+    const anyLocked = QS.some(q=>isLocked(t,q.key));
+    const el = document.getElementById('tlk'+t);
+    if(el) el.textContent = allLocked?'🔒':anyLocked?'🔐':'🔓';
+  });
+}
+
+// ════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════
+function goTo(page){
+  state.currentPage=page;
+  ['dashboard','encode','settings','history'].forEach(p=>{
+    document.getElementById('page-'+p).style.display=p===page?'block':'none';
+    const b=document.getElementById('tnav-'+p); if(b) b.classList.toggle('active',p===page);
+  });
+  if(page==='dashboard') renderDashboard();
+  if(page==='encode')    renderEncode();
+  if(page==='settings')  renderSettings();
+  if(page==='history')   renderHistory();
+}
+function setSY(sy){
+  state.currentSY=sy; state.currentSection=null;
+  const cfg=SY_CONFIG[sy];
+  const badge=document.getElementById('syTypeBadge');
+  badge.textContent=cfg.type==='historical'?'HISTORICAL':'LIVE';
+  badge.className='sy-type-badge '+(cfg.type==='historical'?'sy-type-hist':'sy-type-live');
+  // hide term bar and sidebar for historical SY
+  const hist=isHistSY(sy);
+  document.getElementById('termbarWrap').style.display=hist?'none':'flex';
+  document.getElementById('sidebarWrap').style.display=hist?'none':'flex';
+  document.getElementById('tnav-encode').style.display=hist?'none':'flex';
+  document.getElementById('tnav-settings').style.display=hist?'none':'flex';
+  updateSidebar(); updateTermLockIcons();
+  goTo('dashboard');
+}
+function setTerm(t,el){
+  state.currentTerm=t;
+  document.querySelectorAll('.ttab').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('schoolMPSTerm').textContent=t;
+  updateSidebar(); updateCompletion();
+  if(state.currentPage==='encode')    renderEncode();
+  if(state.currentPage==='dashboard') renderDashboard();
+}
+
+// ════════════════════════════════════════════
+//  SIDEBAR
+// ════════════════════════════════════════════
+function updateSidebar(){
+  const list=document.getElementById('sectionList');
+  const secs=getSecs();
+  if(isHistSY(state.currentSY)){
+    list.innerHTML=''; updateCompletion(); return;
+  }
+  if(!secs.length){
+    list.innerHTML=`<div style="text-align:center;padding:20px 10px;color:var(--ink3);font-size:11px">No sections.<br><b>Admin</b> → Setup to add.</div>`;
+  } else {
+    list.innerHTML=secs.map(sec=>{
+      const {filled,total}=filledCount(sec.id,state.currentTerm);
+      const active=sec.id===state.currentSection?'active':'';
+      const hasData=filled>0?'has-data':'';
+      const delBtn=isAdmin?`<button class="sec-del" onclick="event.stopPropagation();deleteSection('${sec.id}')">✕</button>`:'';
+      return `<div class="sec-item ${active} ${hasData}" onclick="selectSection('${sec.id}')">
+        <div class="sec-dot"></div>
+        <span class="sec-name">${sec.name}</span>
+        <span class="sec-count">${filled}/${total}</span>${delBtn}
+      </div>`;
+    }).join('');
+  }
+  const avg=schoolAvgTerm(state.currentTerm);
+  document.getElementById('schoolMPS').textContent=avg!==null?avg.toFixed(1)+'%':'—';
+  updateAdminBadge(); updateCompletion();
+}
+function updateCompletion(){
+  if(isHistSY(state.currentSY)){
+    document.getElementById('compText').textContent='Historical';
+    document.getElementById('compFill').style.width='100%';
+    document.getElementById('compPct').textContent='';
+    return;
+  }
+  let f=0,t=0;
+  getSecs().forEach(s=>{ const c=filledCount(s.id,state.currentTerm); f+=c.filled; t+=c.total; });
+  const pct=t?Math.round(f/t*100):0;
+  document.getElementById('compText').textContent=`${f}/${t}`;
+  document.getElementById('compFill').style.width=pct+'%';
+  document.getElementById('compPct').textContent=pct+'%';
+}
+function selectSection(id){ state.currentSection=id; updateSidebar(); goTo('encode'); }
+function deleteSection(id){
+  if(!isAdmin){ toast('⛔ Admin only'); return; }
+  if(!confirm('Delete this section and all its MPS data?')) return;
+  curSY().sections=getSecs().filter(s=>s.id!==id);
+  delete curSY().mps[id];
+  if(state.currentSection===id) state.currentSection=null;
+  persist(); updateSidebar();
+  if(state.currentPage==='encode')    renderEncode();
+  if(state.currentPage==='settings')  renderSettings();
+  if(state.currentPage==='dashboard') renderDashboard();
+  toast('Section deleted.');
+}
+
+// ════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════
+function buildSubjectSummaryLive(secs,term){
+  const seen=new Set(), order=[];
+  secs.forEach(sec=>sec.subjects.forEach(s=>{ const k=s.isMapeh?'MAPEH':s.name; if(!seen.has(k)){seen.add(k);order.push(k);} }));
+  const map={};
+  order.forEach(k=>{ map[k]={}; });
+  secs.forEach(sec=>{
+    sec.subjects.forEach((s,i)=>{
+      const k=s.isMapeh?'MAPEH':s.name;
+      map[k][sec.name]=subjAvgInSec(sec,i,term);
+    });
+  });
+  return {order,map};
+}
+
+function summaryTableHTML(title,syLabel,subjOrder,sections,getData,schoolAvgRow){
+  const thCols=sections.map(s=>`<th class="c" style="min-width:82px">${s}</th>`).join('');
+  const tbRows=subjOrder.map(key=>{
+    const vals=sections.map(s=>getData(key,s));
+    const filled=vals.filter(v=>v!==null&&v!==undefined);
+    const schoolA=filled.length?filled.reduce((a,b)=>a+b)/filled.length:null;
+    const tds=vals.map(v=>v!=null?`<td class="c"><span class="avg-chip ${cc(v)}">${v.toFixed(1)}%</span></td>`:`<td class="c" style="color:var(--ink3);font-size:11px;font-family:'JetBrains Mono',monospace">—</td>`).join('');
+    const icon=key==='MAPEH'?'🎵 ':'';
+    return `<tr><td><span style="font-weight:700;font-size:12px">${icon}${key}</span></td>${tds}<td class="c" style="background:rgba(212,80,10,.04)"><span class="avg-chip ${cc(schoolA)} " style="font-weight:800">${schoolA!=null?schoolA.toFixed(1)+'%':'—'}</span></td></tr>`;
+  }).join('');
+  const totCols=sections.map(s=>{ const v=schoolAvgRow[s]||null; return `<td class="c" style="border-top:2px solid var(--border)"><span class="avg-chip ${cc(v)}" style="font-weight:800">${v!=null?v.toFixed(1)+'%':'—'}</span></td>`; }).join('');
+  const schoolTot=Object.values(schoolAvgRow).filter(v=>v!==null);
+  const schoolOv=schoolTot.length?schoolTot.reduce((a,b)=>a+b)/schoolTot.length:null;
+  const totRow=`<tr class="tot-row"><td style="border-top:2px solid var(--border)">SECTION AVG</td>${totCols}<td class="c" style="background:rgba(212,80,10,.08);border-top:2px solid var(--border)"><span class="avg-chip ${cc(schoolOv)}" style="font-weight:800">${schoolOv!=null?schoolOv.toFixed(1)+'%':'—'}</span></td></tr>`;
+  return `<div class="summary-section">
+    <div class="summary-section-title">📊 ${title} <span class="sy-pill">${syLabel}</span></div>
+    <div class="sum-table-wrap">
+      <table><thead><tr><th>Subject</th>${thCols}<th class="c" style="background:rgba(212,80,10,.06)">School Avg</th></tr></thead>
+      <tbody>${tbRows}${totRow}</tbody></table>
+    </div>
+  </div>`;
+}
+
+function renderDashboard(){
+  const sy=state.currentSY, cfg=SY_CONFIG[sy], t=state.currentTerm;
+  const hist=isHistSY(sy);
+  const syLabel=cfg.label;
+
+  // ── YEARLY MPS BAND ──
+  let yearlyBand='<div class="yearly-band">';
+  // Historical SYs
+  ['2024-2025','2025-2026'].forEach(hsy=>{
+    const mps=HIST_DATA[hsy]?.schoolMPS||null;
+    yearlyBand+=`<div class="yearly-card">
+      <div class="yc-icon hist">📜</div>
+      <div class="yc-info">
+        <div class="sy">${SY_CONFIG[hsy].label}</div>
+        <div class="mps ${cc(mps)}">${mps!=null?mps.toFixed(2)+'%':'—'}</div>
+        <div class="lbl">Yearly School MPS</div>
+      </div></div>`;
+  });
+  // Live SYs
+  ['2026-2027','2027-2028','2028-2029'].forEach(lsy=>{
+    const mps=liveYearlyMPS(lsy);
+    yearlyBand+=`<div class="yearly-card">
+      <div class="yc-icon live">🎓</div>
+      <div class="yc-info">
+        <div class="sy">${SY_CONFIG[lsy].label}</div>
+        <div class="mps ${cc(mps)}">${mps!=null?mps.toFixed(2)+'%':'—'}</div>
+        <div class="lbl">Yearly School MPS</div>
+      </div></div>`;
+  });
+  yearlyBand+='</div>';
+
+  // ── HERO ──
+  let heroStats='';
+  if(hist){
+    const hd=HIST_DATA[sy];
+    const sCount=hd?.sections?.length||0;
+    const smps=hd?.schoolMPS||null;
+    heroStats=`
+      <div class="hero-stat"><div class="v">${sCount}</div><div class="l">Sections</div></div>
+      <div class="hero-stat"><div class="v">${smps!=null?smps.toFixed(1)+'%':'—'}</div><div class="l">School MPS</div></div>
+      <div class="hero-stat"><div class="v">Historical</div><div class="l">Data Type</div></div>`;
+  } else {
+    const secs=getSecs();
+    let tF=0,tT=0;
+    secs.forEach(s=>{ const c=filledCount(s.id,t); tF+=c.filled; tT+=c.total; });
+    const avg=schoolAvgTerm(t);
+    heroStats=`
+      <div class="hero-stat"><div class="v">${secs.length}</div><div class="l">Sections</div></div>
+      <div class="hero-stat"><div class="v">${avg!=null?avg.toFixed(1)+'%':'—'}</div><div class="l">School MPS</div></div>
+      <div class="hero-stat"><div class="v">${tF}/${tT}</div><div class="l">ST Encoded</div></div>
+      <div class="hero-stat"><div class="v">Term ${t}</div><div class="l">Period</div></div>`;
+  }
+
+  // ── GRID (rankings etc) ──
+  let gridHTML='';
+  if(hist){
+    const hd=HIST_DATA[sy];
+    const sections=hd.sections||[];
+    const ranked=[...sections].map(s=>({ name:s.name, avg:Object.values(s.subjects).filter(v=>v!=null&&v>0).reduce((a,b,_,arr)=>a+b/arr.length,0) })).sort((a,b)=>b.avg-a.avg);
+    const rankRows=ranked.map((x,i)=>`<div class="rank-row">
+      <div class="rank-n ${i===0?'top':''}">${i+1}</div>
+      <div class="rank-bwrap">
+        <div class="rank-blabel"><span class="rn">${x.name}</span><span class="rv ${cc(x.avg)}">${x.avg.toFixed(1)}%</span></div>
+        <div class="rank-bar"><div class="rank-fill ${cc(x.avg)}" style="width:${Math.min(100,x.avg)}%"></div></div>
+      </div></div>`).join('');
+    const gradeAvg=hd.gradeAvg||{};
+    const gradeRows=Object.entries(gradeAvg).map(([g,subjs])=>{
+      const vals=Object.values(subjs).filter(v=>v!=null&&v>0);
+      const a=vals.length?vals.reduce((x,y)=>x+y)/vals.length:null;
+      return `<div class="rank-row"><div class="rank-bwrap">
+        <div class="rank-blabel"><span class="rn">${g}</span><span class="rv ${cc(a)}">${a!=null?a.toFixed(1)+'%':'—'}</span></div>
+        <div class="rank-bar"><div class="rank-fill ${cc(a)}" style="width:${a!=null?Math.min(100,a):0}%"></div></div>
+      </div></div>`;
+    }).join('');
+    gridHTML=`
+      <div class="dash-card"><div class="dc-head">Section Rankings · ${syLabel}</div>${rankRows}</div>
+      <div class="dash-card"><div class="dc-head">Grade Level Avg · ${syLabel}</div>${gradeRows}</div>`;
+  } else {
+    const secs=getSecs();
+    if(!secs.length){
+      gridHTML=`<div style="grid-column:1/-1"><div class="empty-state">
+        <div class="ei">📋</div><h3>No Sections Yet</h3>
+        <p>Admin must add sections via Setup.</p>
+        ${isAdmin?`<button class="btn btn-primary" style="margin-top:12px" onclick="goTo('settings')">Go to Setup</button>`:''}
+      </div></div>`;
+    } else {
+      const ranked=secs.map(s=>({name:s.name,avg:sectionAvg(s.id,t)})).filter(x=>x.avg!==null).sort((a,b)=>b.avg-a.avg);
+      const rankRows=ranked.length?ranked.map((x,i)=>`<div class="rank-row">
+        <div class="rank-n ${i===0?'top':''}">${i+1}</div>
+        <div class="rank-bwrap">
+          <div class="rank-blabel"><span class="rn">${x.name}</span><span class="rv ${cc(x.avg)}">${x.avg.toFixed(1)}%</span></div>
+          <div class="rank-bar"><div class="rank-fill ${cc(x.avg)}" style="width:${Math.min(100,x.avg)}%"></div></div>
+        </div></div>`).join(''):`<div class="empty-dash">No MPS data yet for Term ${t}.</div>`;
+      const termRows=[1,2,3].map(tm=>{ const a=schoolAvgTerm(tm); return `<div class="rank-row"><div class="rank-n">${tm}</div><div class="rank-bwrap"><div class="rank-blabel"><span class="rn">Term ${tm}</span><span class="rv ${cc(a)}">${a!=null?a.toFixed(1)+'%':'—'}</span></div><div class="rank-bar"><div class="rank-fill ${cc(a)}" style="width:${a!=null?Math.min(100,a):0}%"></div></div></div></div>`; }).join('');
+      const allTermRows=secs.map(sec=>{ const avgs=[1,2,3].map(tm=>sectionAvg(sec.id,tm)).filter(v=>v!==null); const ov=avgs.length?avgs.reduce((a,b)=>a+b)/avgs.length:null; return `<div class="rank-row"><div class="rank-bwrap"><div class="rank-blabel"><span class="rn">${sec.name}</span><span class="rv ${cc(ov)}">${ov!=null?ov.toFixed(1)+'%':'—'}</span></div><div class="rank-bar"><div class="rank-fill ${cc(ov)}" style="width:${ov!=null?Math.min(100,ov):0}%"></div></div></div></div>`; }).join('');
+      gridHTML=`
+        <div class="dash-card"><div class="dc-head">Section Rankings · Term ${t}</div>${rankRows}</div>
+        <div class="dash-card"><div class="dc-head">Term Overview · ${syLabel}</div>${termRows}<div class="dc-head" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">All-Term Avg</div>${allTermRows}</div>`;
+    }
+  }
+
+  // ── SUBJECT SUMMARY TABLES ──
+  let summaryTables='';
+
+  // Historical SY tables
+  ['2024-2025','2025-2026'].forEach(hsy=>{
+    const hd=HIST_DATA[hsy];
+    const hLabel=SY_CONFIG[hsy].label;
+    const secNames=hd.sections.map(s=>s.name);
+    const getD=(key,secName)=>{
+      const sec=hd.sections.find(s=>s.name===secName);
+      return sec?sec.subjects[key]??null:null;
+    };
+    const secAvgRow={};
+    secNames.forEach(sn=>{
+      const sec=hd.sections.find(s=>s.name===sn);
+      const vals=sec?Object.values(sec.subjects).filter(v=>v!=null&&v>0):[];
+      secAvgRow[sn]=vals.length?vals.reduce((a,b)=>a+b)/vals.length:null;
+    });
+    summaryTables+=summaryTableHTML(`Subject MPS Summary`,hLabel,SUBJ_ORDER,secNames,getD,secAvgRow);
+  });
+
+  // Current live SY table
+  if(!hist){
+    const secs=getSecs();
+    if(secs.length){
+      const {order,map}=buildSubjectSummaryLive(secs,t);
+      const secNames=secs.map(s=>s.name);
+      const getD=(key,secName)=>map[key]?.[secName]??null;
+      const secAvgRow={};
+      secNames.forEach(sn=>{ const v=sectionAvg(secs.find(s=>s.name===sn)?.id,t); secAvgRow[sn]=v; });
+      summaryTables+=summaryTableHTML(`Subject MPS Summary · Term ${t}`,syLabel,order,secNames,getD,secAvgRow);
+    }
+  }
+
+  document.getElementById('page-dashboard').innerHTML=`<div class="dash-wrap">
+    <div class="dash-hero">
+      <div class="hero-sy">SCHOOL YEAR ${syLabel}${hist?' · HISTORICAL DATA':''}</div>
+      <div class="hero-title">Mean Percentage Score Tracker</div>
+      <div class="hero-sub">Tugdan National High School · Division of Romblon</div>
+      <div class="hero-stats">${heroStats}</div>
+    </div>
+    ${yearlyBand}
+    <div class="dash-grid">${gridHTML}</div>
+    ${summaryTables}
+  </div>`;
+}
+
+// ════════════════════════════════════════════
+//  ENCODE PAGE
+// ════════════════════════════════════════════
+function renderEncode(){
+  const panel=document.getElementById('page-encode');
+  if(isHistSY(state.currentSY)){ panel.innerHTML=''; return; }
+  if(!state.currentSection){
+    panel.innerHTML=`<div class="entry-wrap"><div class="empty-state"><div class="ei">👈</div><h3>Select a Section</h3><p>Choose a section from the sidebar.</p></div></div>`;
+    return;
+  }
+  const sec=getSecs().find(s=>s.id===state.currentSection);
+  if(!sec){ panel.innerHTML=''; return; }
+  const t=state.currentTerm;
+
+  const vals=[];
+  sec.subjects.forEach((subj,i)=>{
+    if(subj.isMapeh){
+      const pairs=subj.mapehPairs||[];
+      QS.forEach(q=>{ const pv=pairs.map((_,pi)=>normVal(getMPS(sec.id,t,`m${i}_${pi}`,q.key))).filter(v=>v!==null); if(pv.length) vals.push(pv.reduce((a,b)=>a+b)/pv.length); });
+    } else {
+      QS.forEach(q=>{ const v=normVal(getMPS(sec.id,t,i,q.key)); if(v!==null) vals.push(v); });
+    }
+  });
+  const avg=vals.length?(vals.reduce((a,b)=>a+b)/vals.length).toFixed(1):null;
+  const high=vals.length?Math.max(...vals).toFixed(1):null;
+  const low=vals.length?Math.min(...vals).toFixed(1):null;
+  const {filled:fN,total:tN}=filledCount(sec.id,t);
+
+  // Build header with lock status per ST
+  const stHeaders=QS.map(q=>{
+    const locked=isLocked(t,q.key);
+    return `<th class="c"><div class="st-head-wrap">${q.label}<span class="st-lk ${locked?'locked':'open'}">${locked?'🔒 LOCKED':'🔓 OPEN'}</span></div></th>`;
+  }).join('');
+
+  const rows=sec.subjects.map((subj,i)=>{
+    if(subj.isMapeh){
+      const pairs=subj.mapehPairs||[];
+      const pairRows=pairs.map((pair,pi)=>{
+        const qCells=QS.map(q=>{
+          const locked=isLocked(t,q.key);
+          const raw=getMPS(sec.id,t,`m${i}_${pi}`,q.key);
+          const disp=(raw!==''&&raw!==null&&raw!==undefined)?parseFloat(raw):'';
+          const cls=disp!==''?cc(disp>1?disp:disp*100):'';
+          if(locked&&disp==='') return `<td class="c"><span class="locked-cell">locked</span></td>`;
+          if(locked) return `<td class="c"><span class="avg-chip ${cls}">${disp}%</span></td>`;
+          return `<td class="c"><div class="inp-wrap"><input type="number" class="mps-inp ${cls?'v-'+cls:''}" min="0" max="100" step="0.01" value="${disp!==''?disp:''}" placeholder="—" data-sec="${sec.id}" data-term="${t}" data-idx="m${i}_${pi}" data-q="${q.key}" oninput="colorInp(this)" onblur="saveMapeh(this)"><span class="pct">%</span></div></td>`;
+        }).join('');
+        const rv=QS.map(q=>normVal(getMPS(sec.id,t,`m${i}_${pi}`,q.key))).filter(v=>v!==null);
+        const ra=rv.length?(rv.reduce((a,b)=>a+b)/rv.length).toFixed(1):null;
+        return `<tr style="background:rgba(212,80,10,.025)"><td style="padding-left:26px"><div class="subj-cell"><div class="name" style="font-size:12px">↳ ${pair.label}</div><div class="type">MAPEH · shared</div></div></td>${qCells}<td class="c"><span class="avg-chip ${cc(ra)}" style="font-size:10px">${ra!=null?ra+'%':'—'}</span></td></tr>`;
+      }).join('');
+      const mAvgCells=QS.map(q=>{ const pv=pairs.map((_,pi)=>normVal(getMPS(sec.id,t,`m${i}_${pi}`,q.key))).filter(v=>v!==null); const a=pv.length?pv.reduce((a,b)=>a+b)/pv.length:null; return `<td class="c"><span class="avg-chip ${cc(a)}" style="font-weight:800">${a!=null?a.toFixed(1)+'%':'—'}</span></td>`; }).join('');
+      const allMV=pairs.flatMap((_,pi)=>QS.map(q=>normVal(getMPS(sec.id,t,`m${i}_${pi}`,q.key))).filter(v=>v!==null));
+      const mOv=allMV.length?(allMV.reduce((a,b)=>a+b)/allMV.length).toFixed(1):null;
+      return `<tr style="border-top:2px solid var(--border)"><td><div class="subj-cell"><div class="name">🎵 MAPEH</div><div class="type">Core · auto-avg</div></div></td>${mAvgCells}<td class="c"><span class="avg-chip ${cc(mOv)}" style="font-weight:800">${mOv!=null?mOv+'%':'—'}</span></td></tr>${pairRows}`;
+    }
+    const qCells=QS.map(q=>{
+      const locked=isLocked(t,q.key);
+      const raw=getMPS(sec.id,t,i,q.key);
+      const disp=(raw!==''&&raw!==null&&raw!==undefined)?parseFloat(raw):'';
+      const cls=disp!==''?cc(disp>1?disp:disp*100):'';
+      if(locked&&disp==='') return `<td class="c"><span class="locked-cell">locked</span></td>`;
+      if(locked) return `<td class="c"><span class="avg-chip ${cls}">${disp}%</span></td>`;
+      return `<td class="c"><div class="inp-wrap"><input type="number" class="mps-inp ${cls?'v-'+cls:''}" min="0" max="100" step="0.01" value="${disp!==''?disp:''}" placeholder="—" data-sec="${sec.id}" data-term="${t}" data-idx="${i}" data-q="${q.key}" oninput="colorInp(this)" onblur="saveInp(this)"><span class="pct">%</span></div></td>`;
+    }).join('');
+    const rv=QS.map(q=>normVal(getMPS(sec.id,t,i,q.key))).filter(v=>v!==null);
+    const ra=rv.length?(rv.reduce((a,b)=>a+b)/rv.length).toFixed(1):null;
+    return `<tr><td><div class="subj-cell"><div class="name">${subj.name}</div><div class="type">${subj.type||'—'}</div></div></td>${qCells}<td class="c"><span class="avg-chip ${cc(ra)}">${ra!=null?ra+'%':'—'}</span></td></tr>`;
+  }).join('');
+
+  const editBtn=isAdmin?`<button class="btn btn-outline btn-sm" onclick="requireAdmin(()=>openEditSubjects('${sec.id}'))">✏️ Edit Subjects</button>`:`<span style="font-size:11px;color:var(--ink3)">🔒 Admin edits subjects</span>`;
+
+  panel.innerHTML=`<div class="entry-wrap">
+    <div class="entry-header">
+      <div><div class="entry-title">${sec.name}</div>
+        <div class="entry-sub">${SY_CONFIG[state.currentSY].label} · Term ${t} · ${sec.subjects.length} subjects · 3 Summative Tests</div>
+      </div>${editBtn}
+    </div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="sv orange">${avg!=null?avg+'%':'—'}</div><div class="sl">Term Avg</div></div>
+      <div class="stat-box"><div class="sv green">${high!=null?high+'%':'—'}</div><div class="sl">Highest</div></div>
+      <div class="stat-box"><div class="sv yellow">${low!=null?low+'%':'—'}</div><div class="sl">Lowest</div></div>
+      <div class="stat-box"><div class="sv blue">${fN}/${tN}</div><div class="sl">ST Filled</div></div>
+    </div>
+    <div class="mps-table-card">
+      <div class="mtcard-head">
+        <h3>MPS Entry — Term ${t} · ${SY_CONFIG[state.currentSY].label}</h3>
+        <div class="legend">
+          <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>≥75%</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>60–74%</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>&lt;60%</div>
+        </div>
+      </div>
+      <table><thead><tr><th>Subject</th>${stHeaders}<th class="c">Avg</th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--ink3)">No subjects. Admin can add.</td></tr>`}</tbody></table>
+    </div>
+  </div>`;
+}
+function colorInp(el){ const v=parseFloat(el.value); el.classList.remove('v-g','v-y','v-r'); if(!isNaN(v)&&el.value!==''){ const c=cc(v); if(c!=='n') el.classList.add('v-'+c); } }
+function saveInp(el){
+  const v=parseFloat(el.value);
+  setMPS(el.dataset.sec,+el.dataset.term,el.dataset.idx,el.dataset.q,(!isNaN(v)&&el.value!=='')?v:'');
+  persist();
+  flashSaved();
+  updateSidebar();
+  if(state.currentPage==='dashboard') renderDashboard();
+}
+function saveMapeh(el){
+  const v=parseFloat(el.value);
+  setMPS(el.dataset.sec,+el.dataset.term,el.dataset.idx,el.dataset.q,(!isNaN(v)&&el.value!=='')?v:'');
+  persist();
+  flashSaved();
+  renderEncode();
+  updateSidebar();
+  if(state.currentPage==='dashboard') renderDashboard();
+}
+// Auto-save flash indicator
+let _flashT;
+function flashSaved(){
+  const el=document.getElementById('autoSaveIndicator');
+  if(!el) return;
+  el.classList.add('visible');
+  clearTimeout(_flashT);
+  _flashT=setTimeout(()=>el.classList.remove('visible'),1800);
+}
+
+// ════════════════════════════════════════════
+//  SETUP PAGE
+// ════════════════════════════════════════════
+function renderSettings(){
+  const panel=document.getElementById('page-settings');
+  if(!isAdmin){
+    panel.innerHTML=`<div class="config-wrap"><div class="locked-overlay"><div class="lock-ico">🔒</div><h3>Admin Only</h3><p>Enter admin PIN to manage sections and summative test locks.</p><button class="btn btn-primary" style="margin-top:12px" onclick="requireAdmin(()=>goTo('settings'))">Unlock Admin</button></div></div>`;
+    return;
+  }
+  const secs=getSecs(), sy=SY_CONFIG[state.currentSY].label;
+
+  // ── LOCK MANAGER ──
+  const lockGrid=QS.flatMap(q=>[1,2,3].map(term=>{
+    const locked=isLocked(term,q.key);
+    return `<div class="lock-item">
+      <div><div class="lock-item-label">Term ${term} · ${q.label}</div><div class="lock-item-sub">${locked?'🔒 Locked — no edits':'🔓 Open — edits allowed'}</div></div>
+      <button class="lock-toggle ${locked?'on':'off'}" onclick="toggleLock(${term},'${q.key}')" title="${locked?'Unlock':'Lock'}"></button>
+    </div>`;
+  })).join('');
+
+  // ── SECTION CARDS ──
+  const cards=secs.map(sec=>{
+    const subjItems=sec.subjects.map(s=>{
+      if(s.isMapeh){ const pairs=(s.mapehPairs||[]).map(p=>`<span style="font-size:10px;background:var(--accentbg);color:var(--accent);padding:1px 6px;border-radius:8px;font-weight:700">${p.label}</span>`).join(' '); return `<div class="subj-item-sm"><span class="sn">🎵 MAPEH</span><span class="st" style="display:flex;gap:3px;flex-wrap:wrap">${pairs}</span></div>`; }
+      return `<div class="subj-item-sm"><span class="sn">${s.name}</span><span class="st">${s.type||'—'}</span></div>`;
+    }).join('');
+    return `<div class="config-card"><div class="config-card-head"><div><div class="config-card-title">${sec.name}</div><div style="font-size:10px;color:var(--ink3);font-family:'JetBrains Mono',monospace;margin-top:1px">${sec.subjects.length} subjects · ${sy}</div></div><div style="display:flex;gap:5px"><button class="btn btn-outline btn-xs" onclick="openEditSubjects('${sec.id}')">✏️</button><button class="btn btn-red btn-xs" onclick="deleteSection('${sec.id}')">🗑</button></div></div><div class="config-card-body">${subjItems||'<div style="color:var(--ink3);font-size:11px;text-align:center;padding:8px">No subjects.</div>'}</div></div>`;
+  }).join('');
+
+  panel.innerHTML=`<div class="config-wrap">
+    <div class="config-header"><div class="config-title">⚙️ Setup · ${sy}</div><div class="config-sub">Manage sections, subjects, and summative test locks. Admin only.</div></div>
+    <div class="lock-panel">
+      <div class="lock-panel-title">🔐 Summative Test Locks <span style="font-size:11px;font-weight:400;color:var(--ink3)">— toggle to lock/unlock entry per summative test per term</span></div>
+      <div class="lock-grid">${lockGrid}</div>
+    </div>
+    <div class="config-grid">
+      ${cards}
+      <div class="config-card add-card" onclick="openAddSection()"><div class="add-card-inner"><div style="font-size:26px">＋</div><span style="font-size:13px;font-weight:700">Add New Section</span><span style="font-size:11px">${sy}</span></div></div>
+    </div>
+  </div>`;
+}
+function toggleLock(term,q){
+  if(!isAdmin){ toast('⛔ Admin only'); return; }
+  const was=isLocked(term,q);
+  setLock(term,q,!was);
+  persist();
+  toast((!was?'🔒 Locked':'🔓 Unlocked')+`: Term ${term} · ${QS.find(x=>x.key===q)?.label}`);
+  renderSettings();
+  updateTermLockIcons();
+  if(state.currentPage==='encode') renderEncode();
+}
+
+// ════════════════════════════════════════════
+//  MODALS — Section & Subjects
+// ════════════════════════════════════════════
+function openAddSection(){ editingSectionId=null; modalTempSubjects=deepCopySubs(DEFAULT_SUBJECTS); document.getElementById('mSecTitle').textContent='Add New Section'; document.getElementById('mSecName').value=''; document.getElementById('mSecSubjName').value=''; document.getElementById('mSecSubjType').value=''; renderModalSubjList(); openModal('modalSection'); }
+function renderModalSubjList(){ const cnt=document.getElementById('mSecSubjCount'); if(cnt) cnt.textContent=modalTempSubjects.length+' subjects'; document.getElementById('mSecSubjList').innerHTML=modalTempSubjects.map((s,i)=>subjRowHTML(s,i,'modal')).join(''); }
+function subjRowHTML(s,i,ctx){
+  const badge=s.isDefault?`<span style="font-size:9px;background:var(--accentbg);color:var(--accent);border:1px solid rgba(212,80,10,.2);padding:1px 5px;border-radius:8px;font-weight:700;font-family:'JetBrains Mono',monospace">DEF</span>`:`<span style="font-size:9px;background:var(--bluebg);color:var(--blue);border:1px solid rgba(29,95,168,.2);padding:1px 5px;border-radius:8px;font-weight:700;font-family:'JetBrains Mono',monospace">EXTRA</span>`;
+  const del=`<button class="ai-del" onclick="removeSubj(${i},'${ctx}')">✕</button>`;
+  if(s.isMapeh){
+    const pairs=(s.mapehPairs||[]).map(p=>`<span style="display:inline-flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:11px;font-weight:600">🎵 ${p.label}</span>`).join('');
+    return `<div class="subj-added-item" style="flex-wrap:wrap;gap:5px;padding:8px"><div style="display:flex;align-items:center;gap:6px;width:100%"><span class="ai-n">🎵 MAPEH</span>${badge}<span class="ai-t">Core · auto-avg</span>${del}</div><div style="display:flex;gap:4px;flex-wrap:wrap">${pairs}</div></div>`;
+  }
+  return `<div class="subj-added-item"><span class="ai-n">${s.name}</span>${badge}<span class="ai-t">${s.type||''}</span>${del}</div>`;
+}
+function removeSubj(i,ctx){ if(ctx==='modal'){modalTempSubjects.splice(i,1);renderModalSubjList();}else{editTempSubjects.splice(i,1);renderEditSubjList();} }
+function addSubjToModal(){ const name=document.getElementById('mSecSubjName').value.trim(); const type=document.getElementById('mSecSubjType').value.trim(); if(!name){toast('Enter a subject name.');return;} modalTempSubjects.push({name,type,isDefault:false}); document.getElementById('mSecSubjName').value=''; document.getElementById('mSecSubjType').value=''; document.getElementById('mSecSubjName').focus(); renderModalSubjList(); }
+document.getElementById('mSecSubjName').addEventListener('keydown',e=>{if(e.key==='Enter')addSubjToModal();});
+function commitSection(){ const name=document.getElementById('mSecName').value.trim(); if(!name){toast('Enter a section name.');return;} if(editingSectionId){const sec=getSecs().find(s=>s.id===editingSectionId);sec.name=name;sec.subjects=modalTempSubjects;}else{curSY().sections.push({id:uid(),name,subjects:modalTempSubjects});} persist();closeModal('modalSection');updateSidebar();if(state.currentPage==='settings')renderSettings();if(state.currentPage==='dashboard')renderDashboard();toast(editingSectionId?'Section updated!':'Section added! ✓'); }
+function openEditSubjects(secId){ editingSubjectsSectionId=secId; const sec=getSecs().find(s=>s.id===secId); editTempSubjects=deepCopySubs(sec.subjects); document.getElementById('mSubjSub').textContent=sec.name+' — remove or add subjects'; document.getElementById('mSubjName').value=''; document.getElementById('mSubjType').value=''; renderEditSubjList(); openModal('modalSubjects'); }
+function renderEditSubjList(){ document.getElementById('mSubjList').innerHTML=editTempSubjects.map((s,i)=>subjRowHTML(s,i,'edit')).join(''); }
+function addSubjToEdit(){ const name=document.getElementById('mSubjName').value.trim(); const type=document.getElementById('mSubjType').value.trim(); if(!name){toast('Enter a subject name.');return;} editTempSubjects.push({name,type,isDefault:false}); document.getElementById('mSubjName').value=''; document.getElementById('mSubjType').value=''; document.getElementById('mSubjName').focus(); renderEditSubjList(); }
+document.getElementById('mSubjName').addEventListener('keydown',e=>{if(e.key==='Enter')addSubjToEdit();});
+function commitSubjects(){ const sec=getSecs().find(s=>s.id===editingSubjectsSectionId); sec.subjects=editTempSubjects; persist();closeModal('modalSubjects');updateSidebar();if(state.currentPage==='encode')renderEncode();if(state.currentPage==='settings')renderSettings();toast('Subjects updated!'); }
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>{ m.addEventListener('click',e=>{if(e.target===m){closeModal(m.id);adminCallback=null;}}); });
+
+// ════════════════════════════════════════════
+//  EXPORT CSV
+// ════════════════════════════════════════════
+function exportCSV(){
+  const sy=state.currentSY, hist=isHistSY(sy);
+  const rows=['School Year,Section,Subject,Type,Term,Summative Test,MPS'];
+  if(hist){
+    const hd=HIST_DATA[sy];
+    hd.sections.forEach(sec=>{ SUBJ_ORDER.forEach(subj=>{ const v=sec.subjects[subj]; if(v!=null) rows.push([`"${SY_CONFIG[sy].label}"`,`"${sec.name}"`,`"${subj}"`,'Historical','All','Full Year',v.toFixed(2)].join(',')); }); });
+  } else {
+    const secs=getSecs();
+    [1,2,3].forEach(t=>{ secs.forEach(sec=>{ sec.subjects.forEach((subj,i)=>{ if(subj.isMapeh){ const pairs=subj.mapehPairs||[]; pairs.forEach((pair,pi)=>{ QS.forEach(q=>{ const v=getMPS(sec.id,t,`m${i}_${pi}`,q.key); const d=(v!==''&&v!=null)?parseFloat(v):''; rows.push([`"${SY_CONFIG[sy].label}"`,`"${sec.name}"`,`"MAPEH-${pair.label}"`,'MAPEH',t,`"${q.label}"`,d].join(',')); }); }); } else { QS.forEach(q=>{ const v=getMPS(sec.id,t,i,q.key); const d=(v!==''&&v!=null)?parseFloat(v):''; rows.push([`"${SY_CONFIG[sy].label}"`,`"${sec.name}"`,`"${subj.name}"`,`"${subj.type||''}"`  ,t,`"${q.label}"`,d].join(',')); }); } }); }); });
+  }
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`MPS_${sy}.csv`; a.click();
+  toast('⬇ CSV exported!');
+}
+function saveData(){
+  persist();
+  toast(gDriveConnected ? '💾 Saved locally + syncing to Google Drive...' : '💾 All data saved to this browser!');
+}
+
+// ─ Backup: export full state as JSON file ─
+function backupData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const d=new Date(); const ds=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  a.download=`MPS_Backup_TugdanNHS_${ds}.json`;
+  a.click();
+  toast('📦 Backup downloaded!');
+}
+
+// ─ Restore: import state from JSON backup ─
+function restoreData(){
+  if(!confirm('⚠️ Restore from backup? This will OVERWRITE all current data in this browser. Continue?')) return;
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const parsed=JSON.parse(ev.target.result);
+        if(!parsed.syData) throw new Error('Invalid backup file.');
+        // deep restore
+        state.syData={};
+        Object.keys(parsed.syData).forEach(sy=>{
+          state.syData[sy]={
+            sections: parsed.syData[sy].sections||[],
+            mps:      parsed.syData[sy].mps||{},
+            locks:    parsed.syData[sy].locks||{},
+            histPaste:parsed.syData[sy].histPaste||{},
+          };
+        });
+        if(parsed.currentSY && SY_CONFIG[parsed.currentSY]) state.currentSY=parsed.currentSY;
+        state.currentTerm=parsed.currentTerm||1;
+        state.currentSection=null;
+        state.currentPage='dashboard';
+        persist();
+        document.getElementById('sySelect').value=state.currentSY;
+        setSY(state.currentSY);
+        toast('✅ Data restored from backup!');
+      }catch(err){ toast('❌ Restore failed: '+err.message); }
+    };
+    r.readAsText(file);
+  };
+  inp.click();
+}
+
+// TOAST
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2400); }
+
+// ════════════════════════════════════════════
+//  MOBILE HELPERS
+// ════════════════════════════════════════════
+function mobileSaveMenu(){
+  // Simple two-option action sheet
+  const choice = confirm('Save data to this browser?\n\nOK = Save only\nCancel = Cancel\n\n(Use the 📦 Backup button on desktop to download a file backup.)');
+  if(choice) saveData();
+}
+
+const isMobile = () => window.innerWidth <= 768;
+
+function initMobileUI(){
+  const mobile = isMobile();
+  const bn = document.getElementById('bottomNav');
+  const cb = document.getElementById('btnCloseSidebar');
+  const toast = document.getElementById('toast');
+  if(mobile){
+    bn.style.display = 'flex';
+    if(cb) cb.style.display = 'flex';
+    if(toast) toast.style.bottom = '74px';
+  } else {
+    bn.style.display = 'none';
+    if(cb) cb.style.display = 'none';
+    if(toast) toast.style.bottom = '18px';
+    // Ensure sidebar is always visible on desktop
+    const sb = document.getElementById('sidebarWrap');
+    if(sb){ sb.classList.remove('open'); sb.style.transform=''; }
+    document.getElementById('sidebarOverlay').classList.remove('open');
+  }
+  syncBottomNav();
+}
+
+function toggleSidebar(){
+  const sb = document.getElementById('sidebarWrap');
+  const ov = document.getElementById('sidebarOverlay');
+  if(sb.classList.contains('open')){ closeSidebar(); }
+  else { sb.classList.add('open'); ov.classList.add('open'); }
+}
+function closeSidebar(){
+  document.getElementById('sidebarWrap').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+function mobileGoTo(page){
+  closeSidebar();
+  if(isHistSY(state.currentSY) && page !== 'dashboard') return;
+  goTo(page);
+  syncBottomNav();
+}
+
+function syncBottomNav(){
+  ['dashboard','encode','settings','save'].forEach(p=>{
+    const b = document.getElementById('bnav-'+p);
+    if(b) b.classList.toggle('active', p === state.currentPage);
+  });
+  const hist = isHistSY(state.currentSY);
+  const hideOnHist = ['bnav-encode','bnav-settings','bnavSections'];
+  hideOnHist.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.style.display = hist ? 'none' : 'flex';
+  });
+}
+
+// Patch selectSection to auto-close sidebar on mobile
+const _origSelect = selectSection;
+selectSection = function(id){
+  _origSelect(id);
+  if(isMobile()){ closeSidebar(); syncBottomNav(); }
+};
+
+// Patch goTo to also sync bottom nav
+const _origGoTo = goTo;
+goTo = function(page){
+  _origGoTo(page);
+  syncBottomNav();
+};
+
+// Patch setSY to re-init mobile UI
+const _origSetSY = setSY;
+setSY = function(sy){
+  _origSetSY(sy);
+  initMobileUI();
+};
+
+window.addEventListener('resize', initMobileUI);
+
+// ════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════
+function getVisiblePage(){
+  return ['dashboard','encode','settings','history']
+    .find(p=>document.getElementById('page-'+p).style.display!=='none') || 'dashboard';
+}
+
+// Called once at boot: always opens on the dashboard.
+function bootUI(){
+  document.getElementById('sySelect').value = state.currentSY;
+  const cfg   = SY_CONFIG[state.currentSY];
+  const badge = document.getElementById('syTypeBadge');
+  badge.textContent  = cfg.type==='historical' ? 'HISTORICAL' : 'LIVE';
+  badge.className    = 'sy-type-badge ' + (cfg.type==='historical' ? 'sy-type-hist' : 'sy-type-live');
+  const hist = isHistSY(state.currentSY);
+  document.getElementById('termbarWrap').style.display   = hist ? 'none' : 'flex';
+  document.getElementById('sidebarWrap').style.display   = hist ? 'none' : 'flex';
+  document.getElementById('tnav-encode').style.display   = hist ? 'none' : 'flex';
+  document.getElementById('tnav-settings').style.display = hist ? 'none' : 'flex';
+  updateAdminBadge();
+  updateSidebar();
+  updateTermLockIcons();
+  renderDashboard();
+  initMobileUI();
+}
+
+// Called after a Google Drive sync loads new data mid-session: refresh
+// sidebar/badges and whichever page is currently on screen (no forced navigation).
+function refreshUI(){
+  document.getElementById('sySelect').value = state.currentSY;
+  updateSidebar();
+  updateTermLockIcons();
+  const vp = getVisiblePage();
+  if(vp==='dashboard') renderDashboard();
+  if(vp==='encode')    renderEncode();
+  if(vp==='settings')  renderSettings();
+  if(vp==='history')   renderHistory();
+}
+
+loadState();
+bootUI();
+updateDriveUI();
+initGoogleDrive();
+</script>
+</body>
+</html>
