@@ -512,7 +512,7 @@ tr:hover td{background:rgba(0,0,0,.015)}
       <button class="btn btn-sm" onclick="exportCSV()" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.18)">⬇ CSV</button>
       <button class="btn btn-sm" onclick="backupData()" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.15)" title="Download full JSON backup">📦 Backup</button>
       <button class="btn btn-sm" onclick="restoreData()" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.15)" title="Restore from JSON backup">🔁 Restore</button>
-      <button class="btn btn-sm admin-btn" id="driveBtn" onclick="connectDrive()" style="border-radius:20px" title="I-sync ang data sa sarili mong Google Drive">
+      <button class="btn btn-sm admin-btn" id="driveBtn" onclick="connectDrive()" style="border-radius:20px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="I-sync ang data sa shared na Google Drive folder ng school">
         <span>☁️</span><span>Connect Drive</span>
       </button>
       <button class="btn btn-primary btn-sm" onclick="saveData()">💾 Save</button>
@@ -859,10 +859,10 @@ function loadState(){
   }catch(e){ console.warn('Load failed:',e); }
 }
 
-// ─ Google Drive Sync (each teacher's own Drive, via drive.file scope) ─
+// ─ Google Drive Sync (every teacher saves into ONE shared school folder) ─
 const GOOGLE_CLIENT_ID = '391193475360-tfb867viprit9at8kfv97o4oh357n99n.apps.googleusercontent.com';
-const DRIVE_SCOPE      = 'https://www.googleapis.com/auth/drive.file';
-const DRIVE_FILENAME   = 'mps-encoder-2627-data.json';
+const DRIVE_FOLDER_ID  = '1nc-rK6xAVEoX8SiQfWyC1t4F0XuI1aKB'; // shared "MPS Submissions" folder
+const DRIVE_SCOPE      = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
 
 let gTokenClient    = null;
 let gDriveToken     = null;
@@ -870,6 +870,8 @@ let gDriveFileId    = null;
 let gDriveConnected = false;
 let gDriveSyncTimer = null;
 let gDriveBusy      = false;
+let gTeacherEmail   = null;
+let gDriveFilename  = null;
 
 function initGoogleDrive(){
   if(!window.google || !google.accounts || !google.accounts.oauth2){ setTimeout(initGoogleDrive, 300); return; }
@@ -879,6 +881,17 @@ function initGoogleDrive(){
     callback: async (resp)=>{
       if(resp.error){ toast('❌ Hindi ma-connect ang Google Drive: '+resp.error); return; }
       gDriveToken = resp.access_token;
+      try{
+        const who = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{
+          headers:{ Authorization:'Bearer '+gDriveToken }
+        }).then(r=>r.json());
+        gTeacherEmail  = who.email || 'unknown-teacher';
+      }catch(e){
+        console.warn('Userinfo fetch failed:', e);
+        gTeacherEmail = 'unknown-teacher';
+      }
+      gDriveFilename  = `mps-data-${gTeacherEmail}.json`;
+      gDriveFileId    = null;
       gDriveConnected = true;
       sessionStorage.setItem('gDriveWasConnected','1');
       updateDriveUI();
@@ -904,6 +917,8 @@ function disconnectDrive(){
   gDriveConnected = false;
   gDriveToken     = null;
   gDriveFileId    = null;
+  gTeacherEmail   = null;
+  gDriveFilename  = null;
   sessionStorage.removeItem('gDriveWasConnected');
   updateDriveUI();
   toast('🔌 Na-disconnect sa Google Drive. Naka-save pa rin lokal sa browser na ito.');
@@ -913,13 +928,16 @@ function updateDriveUI(){
   const btn = document.getElementById('driveBtn');
   if(!btn) return;
   btn.classList.toggle('unlocked', gDriveConnected);
+  btn.title = gDriveConnected
+    ? `Naka-connect bilang ${gTeacherEmail} — na-sasave sa shared na "MPS Submissions" folder`
+    : 'I-sync ang data sa shared na Google Drive folder ng school';
   btn.innerHTML = gDriveConnected
-    ? '<span>☁️</span><span>Drive Connected</span>'
+    ? `<span>☁️</span><span>${gTeacherEmail||'Connected'}</span>`
     : '<span>☁️</span><span>Connect Drive</span>';
 }
 
 async function driveFindFile(){
-  const q = encodeURIComponent(`name='${DRIVE_FILENAME}' and trashed=false`);
+  const q = encodeURIComponent(`name='${gDriveFilename}' and '${DRIVE_FOLDER_ID}' in parents and trashed=false`);
   const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name,modifiedTime)`,{
     headers:{ Authorization:'Bearer '+gDriveToken }
   });
@@ -934,7 +952,7 @@ async function driveLoad(){
   try{
     const f = await driveFindFile();
     if(!f){
-      toast('☁️ Connected sa Drive! Wala pang existing data doon — i-click ang Save para gumawa ng bago.');
+      toast(`☁️ Naka-connect bilang ${gTeacherEmail}! Wala ka pang file sa shared folder — i-click ang Save para gumawa ng bago.`);
       gDriveBusy = false;
       return;
     }
@@ -947,7 +965,7 @@ async function driveLoad(){
     mergeSavedState(saved);
     persistLocalOnly();
     refreshUI();
-    toast('☁️ Na-load ang pinakabagong data mula sa Google Drive!');
+    toast('☁️ Na-load ang pinakabagong data mo mula sa shared na Drive folder!');
   }catch(e){
     console.warn('Drive load error:', e);
     toast('⚠️ Hindi na-load ang data sa Drive. Gagamitin muna ang naka-save sa browser na ito.');
@@ -963,10 +981,12 @@ async function driveSave(){
       if(existing) gDriveFileId = existing.id;
     }
     const content  = JSON.stringify(state);
-    const metadata = { name: DRIVE_FILENAME, mimeType:'application/json' };
+    const metadata = gDriveFileId
+      ? {}
+      : { name: gDriveFilename, mimeType:'application/json', parents:[DRIVE_FOLDER_ID] };
     const boundary = '-------mpsencoder' + Date.now();
     const body =
-      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${gDriveFileId ? '{}' : JSON.stringify(metadata)}\r\n`+
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`+
       `--${boundary}\r\nContent-Type: application/json\r\n\r\n${content}\r\n`+
       `--${boundary}--`;
     const url = gDriveFileId
