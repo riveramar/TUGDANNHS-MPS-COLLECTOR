@@ -1570,7 +1570,10 @@ function saveMapeh(el){
   setMPS(el.dataset.sec,+el.dataset.term,el.dataset.idx,el.dataset.q,(!isNaN(v)&&el.value!=='')?v:'');
   persist();
   flashSaved();
+  const scroller=document.querySelector('.main');
+  const sTop=scroller?scroller.scrollTop:0;
   renderEncode();
+  if(scroller) scroller.scrollTop=sTop;
   updateSidebar();
   if(state.currentPage==='dashboard') renderDashboard();
 }
@@ -1909,10 +1912,13 @@ function refreshUI(){
   updateSidebar();
   updateTermLockIcons();
   const vp = getVisiblePage();
+  const scroller=document.querySelector('.main');
+  const sTop=scroller?scroller.scrollTop:0;
   if(vp==='dashboard') renderDashboard();
   if(vp==='encode')    renderEncode();
   if(vp==='settings')  renderSettings();
   if(vp==='history')   renderHistory();
+  if(scroller) scroller.scrollTop=sTop;
 }
 
 loadState();
