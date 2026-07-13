@@ -1322,6 +1322,70 @@ function summaryTableHTML(title,syLabel,subjOrder,sections,getData,schoolAvgRow)
   </div>`;
 }
 
+function sectionGrade(name){ const m=(name||'').match(/^\s*(\d+)/); return m?parseInt(m[1],10):null; }
+function gradeFilteredSecs(min,max){ return getSecs().filter(s=>{ const g=sectionGrade(s.name); return g!=null && g>=min && g<=max; }); }
+
+function buildGrade710SubjectAverages(){
+  const secs=gradeFilteredSecs(7,10);
+  const seen=new Set(), order=[];
+  secs.forEach(sec=>sec.subjects.forEach(s=>{ const k=s.isMapeh?'MAPEH':s.name; if(!seen.has(k)){seen.add(k);order.push(k);} }));
+  const termAvgs={};
+  order.forEach(k=>termAvgs[k]={1:null,2:null,3:null});
+  [1,2,3].forEach(term=>{
+    const vals={}; order.forEach(k=>vals[k]=[]);
+    secs.forEach(sec=>{
+      sec.subjects.forEach((s,i)=>{
+        const k=s.isMapeh?'MAPEH':s.name;
+        const a=subjAvgInSec(sec,i,term);
+        if(a!=null) vals[k].push(a);
+      });
+    });
+    order.forEach(k=>{ const arr=vals[k]; termAvgs[k][term]=arr.length?arr.reduce((a,b)=>a+b)/arr.length:null; });
+  });
+  return {order,termAvgs,secs};
+}
+
+function grade710ReportHTML(){
+  const {order,termAvgs,secs}=buildGrade710SubjectAverages();
+  if(!secs.length || !order.length){
+    return `<div class="dash-card" style="grid-column:1/-1"><div class="dc-head">📚 Subject Averages · Grade 7–10 · All Terms</div><div class="empty-dash">Walang Grade 7-10 sections/data pa.</div></div>`;
+  }
+  const rows=order.map(key=>{
+    const t1=termAvgs[key][1], t2=termAvgs[key][2], t3=termAvgs[key][3];
+    const vals=[t1,t2,t3].filter(v=>v!=null);
+    const ov=vals.length?vals.reduce((a,b)=>a+b)/vals.length:null;
+    const icon=key==='MAPEH'?'🎵 ':'';
+    const cell=v=>v!=null?`<td class="c"><span class="avg-chip ${cc(v)}">${v.toFixed(1)}%</span></td>`:`<td class="c" style="color:var(--ink3);font-size:11px;font-family:'JetBrains Mono',monospace">—</td>`;
+    return `<tr><td><span style="font-weight:700;font-size:12px">${icon}${key}</span></td>${cell(t1)}${cell(t2)}${cell(t3)}<td class="c" style="background:rgba(212,80,10,.04)"><span class="avg-chip ${cc(ov)}" style="font-weight:800">${ov!=null?ov.toFixed(1)+'%':'—'}</span></td></tr>`;
+  }).join('');
+  return `<div class="dash-card" style="grid-column:1/-1">
+    <div class="dc-head" style="display:flex;align-items:center;justify-content:space-between">
+      <span>📚 Subject Averages · Grade 7–10 · All Terms</span>
+      <button class="btn btn-outline btn-xs" onclick="exportGrade710CSV()">⬇️ Download</button>
+    </div>
+    <div class="sum-table-wrap">
+      <table><thead><tr><th>Subject</th><th class="c">Term 1</th><th class="c">Term 2</th><th class="c">Term 3</th><th class="c" style="background:rgba(212,80,10,.06)">Overall Avg</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+    </div>
+  </div>`;
+}
+
+function exportGrade710CSV(){
+  const {order,termAvgs,secs}=buildGrade710SubjectAverages();
+  if(!secs.length){ toast('⚠️ Walang Grade 7-10 data para i-download.'); return; }
+  const rows=['Subject,Term 1,Term 2,Term 3,Overall Avg'];
+  order.forEach(key=>{
+    const t1=termAvgs[key][1], t2=termAvgs[key][2], t3=termAvgs[key][3];
+    const vals=[t1,t2,t3].filter(v=>v!=null);
+    const ov=vals.length?vals.reduce((a,b)=>a+b)/vals.length:null;
+    const f=v=>v!=null?v.toFixed(2):'';
+    rows.push([`"${key}"`,f(t1),f(t2),f(t3),f(ov)].join(','));
+  });
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`Subject_Averages_Grade7-10_${state.currentSY}.csv`; a.click();
+  toast('⬇️ Na-download ang Subject Averages report!');
+}
+
 function renderDashboard(){
   const sy=state.currentSY, cfg=SY_CONFIG[sy], t=state.currentTerm;
   const hist=isHistSY(sy);
@@ -1465,7 +1529,7 @@ function renderDashboard(){
       <div class="hero-stats">${heroStats}</div>
     </div>
     ${yearlyBand}
-    <div class="dash-grid">${gridHTML}</div>
+    <div class="dash-grid">${gridHTML}${hist?'':grade710ReportHTML()}</div>
     ${summaryTables}
   </div>`;
 }
