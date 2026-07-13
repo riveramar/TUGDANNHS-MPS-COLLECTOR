@@ -822,8 +822,9 @@ function persist(){
   driveSyncDebounced();
 }
 
-function mergeSavedState(saved){
+function mergeSavedState(saved,applyNav){
   if(!saved) return;
+  if(applyNav===undefined) applyNav=true;
   // Deep-merge syData: keep defaults for any missing SY, overlay saved data on top
   if(saved.syData){
     Object.keys(saved.syData).forEach(sy=>{
@@ -835,12 +836,16 @@ function mergeSavedState(saved){
       if(src.histPaste) state.syData[sy].histPaste  = src.histPaste;
     });
   }
-  // Restore nav state (but validate currentSY still exists)
-  if(saved.currentSY && SY_CONFIG[saved.currentSY])  state.currentSY      = saved.currentSY;
-  if(saved.currentTerm)                               state.currentTerm    = saved.currentTerm;
-  if(saved.currentPage)                               state.currentPage    = saved.currentPage;
-  // currentSection validated below after sections load
-  if(saved.currentSection) state.currentSection = saved.currentSection;
+  // Restore nav state (but validate currentSY still exists) — ONLY when loading
+  // this browser's own local copy at boot. Never apply this from a shared Drive
+  // sync, or one teacher's "currently open section" would yank every other
+  // connected teacher out of whatever section THEY are actively encoding.
+  if(applyNav){
+    if(saved.currentSY && SY_CONFIG[saved.currentSY])  state.currentSY      = saved.currentSY;
+    if(saved.currentTerm)                               state.currentTerm    = saved.currentTerm;
+    if(saved.currentPage)                               state.currentPage    = saved.currentPage;
+    if(saved.currentSection) state.currentSection = saved.currentSection;
+  }
 
   // Ensure every live SY has required sub-keys
   Object.keys(state.syData).forEach(sy=>{
@@ -973,7 +978,7 @@ async function driveLoad(silent){
     }
     if(!res.ok) throw new Error('Drive load failed: '+res.status);
     const saved = await res.json();
-    mergeSavedState(saved);
+    mergeSavedState(saved,false);
     persistLocalOnly();
     refreshUI();
     if(!silent) toast('☁️ Na-load ang pinakabagong shared data mula sa Google Drive!');
