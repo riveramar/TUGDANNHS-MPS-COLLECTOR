@@ -991,6 +991,7 @@ async function driveLoad(silent){
 
 async function driveSave(){
   if(!gDriveConnected || !gDriveToken) return;
+  gDriveBusy = true;
   try{
     const content  = JSON.stringify(state);
     const boundary = '-------mpsencoder' + Date.now();
@@ -1008,25 +1009,36 @@ async function driveSave(){
     console.warn('Drive save error:', e);
     toast('⚠️ Hindi na-sync sa Google Drive (naka-save pa rin ito sa browser na ito).');
   }
+  gDriveBusy = false;
 }
 
 function driveSyncDebounced(){
   if(!gDriveConnected) return;
   clearTimeout(gDriveSyncTimer);
-  gDriveSyncTimer = setTimeout(()=>{ gDriveSyncTimer=null; driveSave(); }, 1200);
+  // gDriveSyncTimer stays truthy (blocking background Drive reads) for the
+  // WHOLE save, not just the debounce wait — otherwise a poll/focus refresh
+  // could land in the gap between "debounce fired" and "PATCH actually
+  // finished", pull the still-stale copy, and stomp what was just typed.
+  gDriveSyncTimer = setTimeout(async ()=>{ await driveSave(); gDriveSyncTimer=null; }, 1200);
 }
 
 // Since everyone shares ONE file, silently pull the latest version whenever
 // the tab regains focus — but only if there's no pending unsaved edit, so we
 // don't clobber something the teacher just typed.
+function isActivelyTypingScore(){
+  const el = document.activeElement;
+  return !!(el && el.classList && el.classList.contains('mps-inp'));
+}
 window.addEventListener('focus', ()=>{
-  if(gDriveConnected && !gDriveBusy && !gDriveSyncTimer){ driveLoad(true); }
+  if(gDriveConnected && !gDriveBusy && !gDriveSyncTimer && !isActivelyTypingScore()){ driveLoad(true); }
 });
 
 // Also poll every 20s while connected & idle, so changes from other teachers
-// show up without needing to switch tabs or click Refresh manually.
+// show up without needing to switch tabs or click Refresh manually. Skipped
+// entirely while a score cell is focused — refreshing rebuilds the whole
+// table from state, which would erase whatever's mid-typed but not yet blurred.
 setInterval(()=>{
-  if(gDriveConnected && !gDriveBusy && !gDriveSyncTimer && document.visibilityState==='visible'){
+  if(gDriveConnected && !gDriveBusy && !gDriveSyncTimer && document.visibilityState==='visible' && !isActivelyTypingScore()){
     driveLoad(true);
   }
 }, 20000);
